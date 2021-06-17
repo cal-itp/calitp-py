@@ -13,7 +13,10 @@ def is_development():
 
 def get_bucket():
     # TODO: can probably pull some of these behaviors into a config class
-    return os.environ["AIRFLOW_VAR_EXTRACT_BUCKET"]
+    if is_development():
+        return "gs://gtfs-data-test"
+    else:
+        return "gs://gtfs-data"
 
 
 def get_project_id():
@@ -23,7 +26,7 @@ def get_project_id():
 def format_table_name(name, is_staging=False, full_name=False):
     dataset, table_name = name.split(".")
     staging = "__staging" if is_staging else ""
-    test_prefix = "test_" if is_development() else ""
+    test_prefix = "zzz_test_" if is_development() else ""
 
     project_id = get_project_id() + "." if full_name else ""
     # e.g. test_gtfs_schedule__staging.agency
