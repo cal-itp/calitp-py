@@ -1,5 +1,12 @@
 import os
+import warnings
+
 from pathlib import Path
+from functools import wraps
+
+
+class RequiresAdminWarning(UserWarning):
+    """Represents errors where, e.g., a user tries to load a table to the warehouse."""
 
 
 def is_development():
@@ -21,6 +28,34 @@ def get_bucket():
 
 def get_project_id():
     return "cal-itp-data-infra"
+
+
+def is_admin():
+    return os.environ.get("CALITP_USER") == "admin"
+
+
+def require_admin(func_name):
+    """Decorator that skips a function is user is not admin.
+
+    Note: this function is for convenience (not to replace appropriate access levels)
+    """
+
+    if not isinstance(func_name, str):
+        raise TypeError("Warning must be a string")
+
+    warning = f"Not running pipeline as admin, so skipping {func_name}()"
+
+    def decorator(f):
+        @wraps(f)
+        def wrapper(*args, **kwargs):
+            if not is_admin():
+                warnings.warn(warning, RequiresAdminWarning)
+            else:
+                return f(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 def format_table_name(name, is_staging=False, full_name=False):

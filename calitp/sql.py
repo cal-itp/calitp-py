@@ -5,7 +5,7 @@ from sqlalchemy.sql.expression import Executable, ClauseElement
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy import create_engine, Table, MetaData, sql
 
-from .config import format_table_name, get_project_id
+from .config import format_table_name, get_project_id, require_admin
 
 
 class CreateTableAs(Executable, ClauseElement):
@@ -57,6 +57,7 @@ def get_table(table_name, as_df=False):
 
 
 @singledispatch
+@require_admin("write_table")
 def write_table(
     sql_stmt,
     table_name,
@@ -94,6 +95,7 @@ def write_table(
 
 
 @write_table.register(pd.DataFrame)
+@require_admin("Not running as pipeline admin, so skipping write_table")
 def _write_table_df(sql_stmt, table_name, engine=None, replace=True):
     if_exists = "replace" if replace else "fail"
     return sql_stmt.to_gbq(
