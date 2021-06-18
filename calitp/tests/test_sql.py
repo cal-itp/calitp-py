@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 import uuid
 
-from calitp.sql import get_table, write_table
+from calitp.sql import get_table, write_table, query_sql
 from contextlib import contextmanager
 from calitp.config import RequiresAdminWarning
 from calitp.tests.helpers import CI_SCHEMA_NAME
@@ -71,3 +71,21 @@ def test_get_table(tmp_name):
 
     tbl_test = get_table(tmp_name, as_df=True)
     assert_frame_equal(tbl_test, df)
+
+
+def test_query_sql():
+    import tempfile
+    import datetime
+
+    from pathlib import Path
+    from calitp.templates import user_defined_macros
+
+    with tempfile.TemporaryDirectory() as dir_name:
+        p_query = Path(dir_name) / "query.yml"
+        p_query.write_text("""sql: SELECT {{THE_FUTURE}}""")
+
+        query_txt = query_sql(str(p_query), dry_run=True)
+        assert query_txt == f"SELECT {user_defined_macros['THE_FUTURE']}"
+
+        res = query_sql(str(p_query))
+        assert res.fetchall() == [(datetime.date(2099, 1, 1),)]

@@ -103,15 +103,19 @@ def _write_table_df(sql_stmt, table_name, engine=None, replace=True):
     )
 
 
-def query_yaml(fname, write_as=None, replace=False, dry_run=False):
+def query_sql(fname, write_as=None, replace=False, dry_run=False):
     import yaml
-    from jinja2 import Environment, select_autoescape
+    from jinja2 import Environment
     from .templates import user_defined_filters, user_defined_macros
 
-    config = yaml.safe_load(open(fname))
+    if fname.endswith(".yml") or fname.endswith(".yaml"):
+        config = yaml.safe_load(open(fname))
 
-    sql_template_raw = config["sql"]
-    env = Environment(autoescape=select_autoescape())
+        sql_template_raw = config["sql"]
+    else:
+        sql_template_raw = fname
+
+    env = Environment()
     env.filters = {**env.filters, **user_defined_filters}
 
     template = env.from_string(sql_template_raw)
@@ -119,7 +123,7 @@ def query_yaml(fname, write_as=None, replace=False, dry_run=False):
     sql_code = template.render({**user_defined_macros})
 
     if dry_run:
-        print(sql_code)
+        return sql_code
     elif write_as is not None:
         return write_table(sql_code, write_as, replace=replace)
     else:
