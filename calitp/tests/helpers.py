@@ -1,1 +1,1 @@
-CI_TABLE_NAME = "calitp_py"
+CI_SCHEMA_NAME = "calitp_py"

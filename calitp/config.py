@@ -12,10 +12,23 @@ class RequiresAdminWarning(UserWarning):
 def is_development():
     options = {"development", "cal-itp-data-infra"}
 
-    if os.environ["AIRFLOW_ENV"] not in options:
-        raise ValueError("AIRFLOW_ENV variable must be one of %s" % options)
+    # if a person can write data, then they need to set AIRFLOW_ENV
+    if is_pipeline():
+        if "AIRFLOW_ENV" not in os.environ:
+            raise KeyError(
+                "Pipeline admin must set AIRFLOW_ENV env variable explicitly"
+            )
 
-    return os.environ["AIRFLOW_ENV"] == "development"
+        env = os.environ["AIRFLOW_ENV"]
+
+        if env not in options:
+            raise ValueError("AIRFLOW_ENV variable must be one of %s" % options)
+
+    # otherwise, analysts connect to prod data by default
+    else:
+        env = os.environ.get("AIRFLOW_ENV", "cal-itp-data-infra")
+
+    return env == "development"
 
 
 def get_bucket():
@@ -30,11 +43,11 @@ def get_project_id():
     return "cal-itp-data-infra"
 
 
-def is_admin():
-    return os.environ.get("CALITP_USER") == "admin"
+def is_pipeline():
+    return os.environ.get("CALITP_USER") == "pipeline"
 
 
-def require_admin(func_name):
+def require_pipeline(func_name):
     """Decorator that skips a function is user is not admin.
 
     Note: this function is for convenience (not to replace appropriate access levels)
@@ -43,12 +56,12 @@ def require_admin(func_name):
     if not isinstance(func_name, str):
         raise TypeError("Warning must be a string")
 
-    warning = f"Not running pipeline as admin, so skipping {func_name}()"
+    warning = f"Not running in pipeline, so skipping {func_name}()"
 
     def decorator(f):
         @wraps(f)
         def wrapper(*args, **kwargs):
-            if not is_admin():
+            if not is_pipeline():
                 warnings.warn(warning, RequiresAdminWarning)
             else:
                 return f(*args, **kwargs)

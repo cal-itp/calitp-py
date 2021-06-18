@@ -1,6 +1,6 @@
 import gcsfs
 
-from .config import is_development, get_bucket, require_admin
+from .config import is_development, get_bucket, require_pipeline
 
 
 def get_fs(gcs_project="cal-itp-data-infra"):
@@ -10,7 +10,7 @@ def get_fs(gcs_project="cal-itp-data-infra"):
         return gcsfs.GCSFileSystem(project=gcs_project, token="cloud")
 
 
-@require_admin("save_to_gcfs")
+@require_pipeline("save_to_gcfs")
 def save_to_gcfs(
     src_path,
     dst_path,
