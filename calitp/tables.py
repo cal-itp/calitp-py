@@ -4,12 +4,39 @@ from .sql import get_engine
 from .config import is_development
 
 
+class AttributeDict:
+    def __init__(self):
+        self._d = {}
+
+    def __getattr__(self, k):
+        if k in self._d:
+            return self._d[k]
+
+        raise AttributeError("No attribute %s" % k)
+
+    def __setitem__(self, k, v):
+        self._d[k] = v
+
+    def __dir__(self):
+        return list(self._d.keys())
+
+
 class AutoTable:
     def __init__(self, engine, table_formatter=None, table_filter=None):
         self._engine = engine
         self._table_formatter = table_formatter
         self._table_filter = table_filter
         self._table_names = tuple()
+        self._accessors = {}
+
+    def __getattr__(self, k):
+        if k in self._accessors:
+            return self._accessors[k]
+
+        raise AttributeError("No such attribute %s" % k)
+
+    def __dir__(self):
+        return list(self._accessors.keys())
 
     def _init(self):
         # remove any previously initialized attributes ----
@@ -34,7 +61,12 @@ class AutoTable:
 
     def _attach_mappings(self, mappings):
         for k, v in mappings.items():
-            setattr(self, k, self._table_factory(v))
+            schema, table = k.split(".")
+
+            if schema not in self._accessors:
+                self._accessors[schema] = AttributeDict()
+
+            self._accessors[schema][table] = self._table_factory(v)
 
     def _table_factory(self, table_name):
         def loader():
@@ -48,7 +80,7 @@ class AutoTable:
 
 tbl = AutoTable(
     get_engine(),
-    lambda s: s.replace(".", "_"),
+    lambda s: s,  # s.replace(".", "_"),
     lambda s: "zzz_test_" not in s if not is_development() else True,
 )
 
