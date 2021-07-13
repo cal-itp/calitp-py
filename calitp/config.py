@@ -81,7 +81,8 @@ def require_pipeline(func_name):
 def format_table_name(name, is_staging=False, full_name=False):
     dataset, table_name = name.split(".")
     staging = "__staging" if is_staging else ""
-    test_prefix = "zzz_test_" if is_development() else ""
+    # test_prefix = "zzz_test_" if is_development() else ""
+    test_prefix = ""
 
     project_id = get_project_id() + "." if full_name else ""
     # e.g. test_gtfs_schedule__staging.agency
