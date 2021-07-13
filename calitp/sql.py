@@ -5,7 +5,14 @@ from sqlalchemy.sql.expression import Executable, ClauseElement
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy import create_engine, Table, MetaData, sql
 
-from .config import format_table_name, get_project_id, require_pipeline
+from .config import (
+    CALITP_BQ_MAX_BYTES,
+    CALITP_BQ_LOCATION,
+    format_table_name,
+    get_project_id,
+    require_pipeline,
+    get_project,
+)
 
 
 class CreateTableAs(Executable, ClauseElement):
@@ -38,9 +45,12 @@ def visit_insert_from_select(element, compiler, **kw):
         """
 
 
-def get_engine():
+def get_engine(max_bytes=None):
+    max_bytes = CALITP_BQ_MAX_BYTES if max_bytes is None else max_bytes
+
     return create_engine(
-        "bigquery://cal-itp-data-infra/?maximum_bytes_billed=5000000000"
+        f"bigquery://{get_project()}/?maximum_bytes_billed={max_bytes}"
+        f"?location={CALITP_BQ_LOCATION}"
     )
 
 

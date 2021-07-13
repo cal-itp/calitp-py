@@ -5,6 +5,10 @@ from pathlib import Path
 from functools import wraps
 
 
+CALITP_BQ_MAX_BYTES = os.environ.get("CALITP_BQ_MAX_BYTES", 5_000_000_000)
+CALITP_BQ_LOCATION = os.environ.get("CALITP_BQ_LOCATION", "us-west2")
+
+
 class RequiresAdminWarning(UserWarning):
     """Represents errors where, e.g., a user tries to load a table to the warehouse."""
 
@@ -40,6 +44,9 @@ def get_bucket():
 
 
 def get_project_id():
+    if is_development():
+        return "cal-itp-data-infra-staging"
+
     return "cal-itp-data-infra"
 
 
