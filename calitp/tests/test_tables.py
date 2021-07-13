@@ -57,6 +57,6 @@ def test_write_table(tmp_name):
 
     tbl._init()
 
-    tbl_tmp = getattr(tbl.zzz_test_calitp_py, table_name)()
+    tbl_tmp = getattr(tbl.calitp_py, table_name)()
 
     assert isinstance(tbl_tmp, LazyTbl)
