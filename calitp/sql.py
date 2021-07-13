@@ -11,7 +11,6 @@ from .config import (
     format_table_name,
     get_project_id,
     require_pipeline,
-    get_project,
 )
 
 
@@ -49,7 +48,7 @@ def get_engine(max_bytes=None):
     max_bytes = CALITP_BQ_MAX_BYTES if max_bytes is None else max_bytes
 
     return create_engine(
-        f"bigquery://{get_project()}/?maximum_bytes_billed={max_bytes}"
+        f"bigquery://{get_project_id()}/?maximum_bytes_billed={max_bytes}"
         f"?location={CALITP_BQ_LOCATION}"
     )
 
