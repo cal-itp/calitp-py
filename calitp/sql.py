@@ -47,9 +47,11 @@ def visit_insert_from_select(element, compiler, **kw):
 def get_engine(max_bytes=None):
     max_bytes = CALITP_BQ_MAX_BYTES if max_bytes is None else max_bytes
 
+    # Note that we should be able to add location as a uri parameter, but
+    # it is not being picked up, so passing as a separate argument for now.
     return create_engine(
-        f"bigquery://{get_project_id()}/?maximum_bytes_billed={max_bytes}"
-        f"?location={CALITP_BQ_LOCATION}"
+        f"bigquery://{get_project_id()}/?maximum_bytes_billed={max_bytes}",
+        location=CALITP_BQ_LOCATION,
     )
 
 
