@@ -168,7 +168,9 @@ def sql_patch_comments(table_name, field_comments, bq_client=None):
     if bq_client is None:
         from google.cloud import bigquery
 
-        bq_client = bigquery.Client(location=CALITP_BQ_LOCATION)
+        bq_client = bigquery.Client(
+            project=get_project_id(), location=CALITP_BQ_LOCATION
+        )
 
     tbl = bq_client.get_table(table_name)
     old_schema = tbl.schema
