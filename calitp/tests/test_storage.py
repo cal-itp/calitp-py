@@ -4,11 +4,20 @@ import uuid
 from calitp.config import get_bucket
 from calitp.storage import get_fs
 
+GCS_BUCKET = "gs://calitp-py-ci"
+
 
 @pytest.fixture
 def tmp_name():
     # generate a random table name. ensure it does not start with a number.
-    yield str(uuid.uuid4())
+    name = f"{GCS_BUCKET}/calitp-" + str(uuid.uuid4())
+    yield name
+
+    try:
+        fs = get_fs()
+        fs.rm(tmp_name, recursive=True)
+    except Exception:
+        UserWarning("GCS folder not deleted: %s" % name)
 
 
 def test_get_fs_pipe(tmp_name):
