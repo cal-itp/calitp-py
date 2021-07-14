@@ -1,6 +1,7 @@
 import os
 import warnings
 
+from contextlib import contextmanager
 from pathlib import Path
 from functools import wraps
 
@@ -104,3 +105,23 @@ def pipe_file_name(path):
         root = Path(os.environ["DAGS_FOLDER"]).parent
 
     return str(root / path)
+
+
+@contextmanager
+def pipeline_context():
+    """Temporarily set CALITP_USER to be pipeline.
+
+    This allows a user to write to tables on production and staging.
+    """
+
+    prev_user = os.environ.get("CALITP_USER")
+
+    os.environ["CALITP_USER"] = "pipeline"
+
+    try:
+        yield
+    finally:
+        if prev_user is None:
+            del os.environ["CALITP_USER"]
+        else:
+            os.environ["CALITP_USER"] = prev_user
