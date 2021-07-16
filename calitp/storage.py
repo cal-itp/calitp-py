@@ -1,13 +1,13 @@
 import gcsfs
 
-from .config import is_development, get_bucket, require_pipeline
+from .config import is_pipeline, get_bucket, require_pipeline
 
 
-def get_fs(gcs_project="cal-itp-data-infra"):
-    if is_development():
-        return gcsfs.GCSFileSystem(project=gcs_project, token="google_default")
-    else:
+def get_fs(gcs_project=""):
+    if is_pipeline():
         return gcsfs.GCSFileSystem(project=gcs_project, token="cloud")
+    else:
+        return gcsfs.GCSFileSystem(project=gcs_project, token="google_default")
 
 
 @require_pipeline("save_to_gcfs")
@@ -44,9 +44,7 @@ def save_to_gcfs(
     return full_dst_path
 
 
-def read_gcfs(
-    src_path, dst_path=None, gcs_project="cal-itp-data-infra", bucket=None, verbose=True
-):
+def read_gcfs(src_path, dst_path=None, gcs_project="", bucket=None, verbose=True):
     """
     Arguments:
         src_path: path to file being read from google cloud.

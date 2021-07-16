@@ -1,8 +1,13 @@
 import os
 import warnings
 
+from contextlib import contextmanager
 from pathlib import Path
 from functools import wraps
+
+
+CALITP_BQ_MAX_BYTES = os.environ.get("CALITP_BQ_MAX_BYTES", 5_000_000_000)
+CALITP_BQ_LOCATION = os.environ.get("CALITP_BQ_LOCATION", "us-west2")
 
 
 class RequiresAdminWarning(UserWarning):
@@ -40,6 +45,9 @@ def get_bucket():
 
 
 def get_project_id():
+    if is_development():
+        return "cal-itp-data-infra-staging"
+
     return "cal-itp-data-infra"
 
 
@@ -74,7 +82,8 @@ def require_pipeline(func_name):
 def format_table_name(name, is_staging=False, full_name=False):
     dataset, table_name = name.split(".")
     staging = "__staging" if is_staging else ""
-    test_prefix = "zzz_test_" if is_development() else ""
+    # test_prefix = "zzz_test_" if is_development() else ""
+    test_prefix = ""
 
     project_id = get_project_id() + "." if full_name else ""
     # e.g. test_gtfs_schedule__staging.agency
@@ -96,3 +105,23 @@ def pipe_file_name(path):
         root = Path(os.environ["DAGS_FOLDER"]).parent
 
     return str(root / path)
+
+
+@contextmanager
+def pipeline_context():
+    """Temporarily set CALITP_USER to be pipeline.
+
+    This allows a user to write to tables on production and staging.
+    """
+
+    prev_user = os.environ.get("CALITP_USER")
+
+    os.environ["CALITP_USER"] = "pipeline"
+
+    try:
+        yield
+    finally:
+        if prev_user is None:
+            del os.environ["CALITP_USER"]
+        else:
+            os.environ["CALITP_USER"] = prev_user

@@ -3,8 +3,7 @@ import pytest
 import uuid
 
 from calitp.sql import get_table, write_table, query_sql
-from contextlib import contextmanager
-from calitp.config import RequiresAdminWarning
+from calitp.config import RequiresAdminWarning, pipeline_context
 from calitp.tests.helpers import CI_SCHEMA_NAME
 
 from pandas.testing import assert_frame_equal
@@ -13,23 +12,6 @@ from pandas.testing import assert_frame_equal
 # to create / delete prod tables. Bigquery lets you set read access on individual
 # datasets, but write access happens at the project level. Working around now
 # by creating a table outside CI, then only testing reading it.
-
-
-@contextmanager
-def as_pipeline():
-    import os
-
-    prev_user = os.environ.get("CALITP_USER")
-
-    os.environ["CALITP_USER"] = "pipeline"
-
-    try:
-        yield
-    finally:
-        if prev_user is None:
-            del os.environ["CALITP_USER"]
-        else:
-            os.environ["CALITP_USER"] = prev_user
 
 
 @pytest.fixture
@@ -53,7 +35,7 @@ def tmp_name():
 def test_write_table(tmp_name):
     df = pd.DataFrame({"x": [1, 2, 3]})
 
-    with as_pipeline():
+    with pipeline_context():
         write_table(df, tmp_name)
 
 
@@ -66,7 +48,7 @@ def test_write_table_no_admin(tmp_name):
 
 def test_get_table(tmp_name):
     df = pd.DataFrame({"x": [1, 2, 3]})
-    with as_pipeline():
+    with pipeline_context():
         write_table(df, tmp_name)
 
     tbl_test = get_table(tmp_name, as_df=True)

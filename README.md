@@ -11,3 +11,14 @@ pip install git+https://github.com/machow/siuba.git@feat-bigquery
 # Install calitp package
 pip install git+https://github.com/cal-itp/calitp-py.git
 ```
+
+## Configure
+
+`calitp` uses the following environment variables:
+
+* `CALITP_BQ_MAX_BYTES`
+* `CALITP_BQ_LOCATION`
+* `CALITP_USER`
+* `AIRFLOW_ENV`
+* `AIRFLOW__CORE__DAGS_FOLDER`
+* `DAGS_FOLDER`
