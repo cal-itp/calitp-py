@@ -1,10 +1,10 @@
 import gcsfs
 
-from .config import is_pipeline, get_bucket, require_pipeline
+from .config import is_cloud, get_bucket, require_pipeline
 
 
 def get_fs(gcs_project=""):
-    if is_pipeline():
+    if is_cloud():
         return gcsfs.GCSFileSystem(project=gcs_project, token="cloud")
     else:
         return gcsfs.GCSFileSystem(project=gcs_project, token="google_default")

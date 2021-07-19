@@ -22,3 +22,11 @@ pip install git+https://github.com/cal-itp/calitp-py.git
 * `AIRFLOW_ENV`
 * `AIRFLOW__CORE__DAGS_FOLDER`
 * `DAGS_FOLDER`
+
+### Configuration helper functions
+
+| name | env variable | description |
+| ---- | ------------ | ----------- |
+| `is_development()` | `AIRFLOW_ENV` | E.g. changes project_id between staging and production. |
+| `is_pipeline()` | `CALITP_USER` | Enables writing to warehouse. E.g. functions like `write_table()`. |
+| `is_cloud()` | `CALITP_AUTH` | Toggles GCSFS authentication to "cloud" (vs "google_default"). |
