@@ -36,6 +36,10 @@ def is_development():
     return env == "development"
 
 
+def is_cloud():
+    return os.environ.get("CALITP_AUTH") == "cloud"
+
+
 def get_bucket():
     # TODO: can probably pull some of these behaviors into a config class
     if is_development():
