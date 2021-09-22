@@ -9,7 +9,7 @@ Tools for accessing and analyzing cal-itp data
 pip install git+https://github.com/machow/siuba.git@stable
 
 # Install calitp package
-pip install git+https://github.com/cal-itp/calitp-py.git
+pip install calitp
 ```
 
 ## Configure
