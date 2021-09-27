@@ -114,7 +114,7 @@ def _write_table_df(sql_stmt, table_name, engine=None, replace=True):
     )
 
 
-def query_sql(fname, write_as=None, replace=False, dry_run=False):
+def query_sql(fname, write_as=None, replace=False, dry_run=False, as_df=True):
     import yaml
     from jinja2 import Environment
     from .templates import user_defined_filters, user_defined_macros
@@ -139,6 +139,10 @@ def query_sql(fname, write_as=None, replace=False, dry_run=False):
         return write_table(sql_code, write_as, replace=replace)
     else:
         engine = get_engine()
+
+        if as_df:
+            return pd.read_sql_query(sql_code, engine)
+
         return engine.execute(sql_code)
 
 
