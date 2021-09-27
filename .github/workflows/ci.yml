@@ -25,3 +25,41 @@ jobs:
       - name: Run tests
         run: |
           pytest
+
+  docs:
+    name: "Generate Docs"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements-dev.txt
+          python -m pip install .
+
+      - uses: google-github-actions/setup-gcloud@master
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: "Build docs folder"
+        run: |
+          make docs-build/index.html
+
+      - name: Deploy
+        if: ${{ github.ref == 'refs/heads/docs' }}
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs-build
+
+            # - name: Deploy docs
+            #   uses: mhausenblas/mkdocs-deploy-gh-pages@master
+            #   # Or use mhausenblas/mkdocs-deploy-gh-pages@nomaterial to build without the mkdocs-material theme
+            #   env:
+            #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            #     #CUSTOM_DOMAIN: optionaldomain.com
+            #     CONFIG_FILE: folder/mkdocs.yml
+            #     EXTRA_PACKAGES: build-base

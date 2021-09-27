@@ -66,8 +66,14 @@ def test_query_sql():
         p_query = Path(dir_name) / "query.yml"
         p_query.write_text("""sql: SELECT {{THE_FUTURE}}""")
 
-        query_txt = query_sql(str(p_query), dry_run=True)
+        query_txt = query_sql(str(p_query), dry_run=True, as_df=False)
         assert query_txt == f"SELECT {user_defined_macros['THE_FUTURE']}"
 
-        res = query_sql(str(p_query))
+        res = query_sql(str(p_query), as_df=False)
         assert res.fetchall() == [(datetime.date(2099, 1, 1),)]
+
+
+def test_query_sql_as_df():
+    df = query_sql("SELECT 1 AS n")
+    assert len(df) == 1
+    assert "n" in df.columns
