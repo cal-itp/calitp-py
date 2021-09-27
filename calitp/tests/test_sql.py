@@ -69,7 +69,7 @@ def test_query_sql():
         query_txt = query_sql(str(p_query), dry_run=True, as_df=False)
         assert query_txt == f"SELECT {user_defined_macros['THE_FUTURE']}"
 
-        res = query_sql(str(p_query))
+        res = query_sql(str(p_query), as_df=False)
         assert res.fetchall() == [(datetime.date(2099, 1, 1),)]
 
 
