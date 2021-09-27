@@ -39,6 +39,11 @@ jobs:
           python -m pip install -r requirements-dev.txt
           python -m pip install .
 
+      - uses: google-github-actions/setup-gcloud@master
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
       - name: "Build docs folder"
         run: |
           make docs-build/README.md
