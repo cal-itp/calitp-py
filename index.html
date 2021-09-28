@@ -14515,7 +14515,7 @@ a.anchor-link {
 
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="calitp">calitp<a class="anchor-link" href="#calitp">&#182;</a></h1>
+<h1 id="Issue-%23329">Issue #329<a class="anchor-link" href="#Issue-%23329">&#182;</a></h1>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
@@ -14525,6 +14525,9 @@ a.anchor-link {
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="kn">from</span> <span class="nn">calitp.tables</span> <span class="kn">import</span> <span class="n">tbl</span>
 <span class="kn">from</span> <span class="nn">calitp</span> <span class="kn">import</span> <span class="n">query_sql</span>
+<span class="kn">from</span> <span class="nn">siuba</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;display.max_rows&quot;</span><span class="p">,</span> <span class="mi">20</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -14535,18 +14538,22 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="metabase">metabase<a class="anchor-link" href="#metabase">&#182;</a></h3>
+<h2 id="1.-Number-of-Routes-for-a-Given-Agency-Over-Time">1. Number of Routes for a Given Agency Over Time<a class="anchor-link" href="#1.-Number-of-Routes-for-a-Given-Agency-Over-Time">&#182;</a></h2>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><img src="assets/issue_329.png" alt=""></p>
+<h3 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feed_routes<br>
+<strong>Secondary Tables</strong> →  views.gtfs_schedule_dim_feeds</p>
+<p><em>Time</em> → date (GROUP BY)<br>
+<em>Geography</em> → route_key (COUNT)<br>
+<em>Agency</em> → Join w/ views.gtfs_schedule_dim_feeds on feed_key for calitp_feed_name (GROUP BY)</p>
 
-</div>
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="siuba">siuba<a class="anchor-link" href="#siuba">&#182;</a></h3>
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
@@ -14554,7 +14561,23 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[2]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">tbl</span><span class="o">.</span><span class="n">gtfs_schedule</span><span class="o">.</span><span class="n">agency</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">query_sql</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+
+<span class="s2">SELECT</span>
+<span class="s2">    calitp_feed_name,</span>
+<span class="s2">    date,</span>
+<span class="s2">    count(*) AS count_feeds</span>
+<span class="s2">FROM `views.gtfs_schedule_fact_daily_feed_routes`</span>
+<span class="s2">JOIN `views.gtfs_schedule_dim_feeds` USING (feed_key)</span>
+<span class="s2">WHERE</span>
+<span class="s2">    calitp_feed_name = &quot;Unitrans (0)&quot;</span>
+<span class="s2">GROUP BY</span>
+<span class="s2">    1, 2</span>
+<span class="s2">ORDER BY</span>
+<span class="s2">    date DESC</span>
+<span class="s2">LIMIT 10</span>
+
+<span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
 </pre></div>
 
      </div>
@@ -14571,6 +14594,159 @@ a.anchor-link {
 
     
     <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[2]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>calitp_feed_name</th>
+      <th>date</th>
+      <th>count_feeds</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-24</td>
+      <td>18</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-23</td>
+      <td>18</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-22</td>
+      <td>18</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-21</td>
+      <td>18</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-20</td>
+      <td>18</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-19</td>
+      <td>18</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-18</td>
+      <td>18</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-17</td>
+      <td>18</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-16</td>
+      <td>18</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-15</td>
+      <td>18</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → Gtfs Schedule Fact Daily Feed Routes</p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><img src="assets/routes_agency_over_time.png" alt=""></p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h3>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Join to get CalITP Feed Names</span>
+<span class="c1"># Count routes by date and CalITP Feed Names, order by date, filter by specific calitp_feed_name</span>
+
+<span class="p">(</span>
+    <span class="n">tbl</span><span class="o">.</span><span class="n">views</span><span class="o">.</span><span class="n">gtfs_schedule_fact_daily_feed_routes</span><span class="p">()</span>
+    <span class="o">&gt;&gt;</span> <span class="n">left_join</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">tbl</span><span class="o">.</span><span class="n">views</span><span class="o">.</span><span class="n">gtfs_schedule_dim_feeds</span><span class="p">(),</span> <span class="s2">&quot;feed_key&quot;</span><span class="p">)</span>
+    <span class="o">&gt;&gt;</span> <span class="nb">filter</span><span class="p">(</span><span class="n">_</span><span class="o">.</span><span class="n">calitp_feed_name</span> <span class="o">==</span> <span class="s2">&quot;Unitrans (0)&quot;</span><span class="p">)</span>
+    <span class="o">&gt;&gt;</span> <span class="n">count</span><span class="p">(</span><span class="n">_</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+    <span class="o">&gt;&gt;</span> <span class="n">arrange</span><span class="p">(</span><span class="n">_</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[3]:</div>
 
 
 
@@ -14596,89 +14772,35 @@ a.anchor-link {
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>calitp_itp_id</th>
-      <th>calitp_url_number</th>
-      <th>agency_id</th>
-      <th>agency_name</th>
-      <th>agency_url</th>
-      <th>agency_timezone</th>
-      <th>agency_lang</th>
-      <th>agency_phone</th>
-      <th>agency_fare_url</th>
-      <th>agency_email</th>
-      <th>calitp_extracted_at</th>
+      <th>date</th>
+      <th>n</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>8</td>
-      <td>1</td>
-      <td>Monterey-Salinas Transit</td>
-      <td>Monterey-Salinas Transit</td>
-      <td>http://www.mst.org</td>
-      <td>America/Los_Angeles</td>
-      <td>None</td>
-      <td>1-888-MST-BUS1</td>
-      <td>None</td>
-      <td>None</td>
-      <td>2021-05-11</td>
+      <td>2021-04-15</td>
+      <td>20</td>
     </tr>
     <tr>
       <th>1</th>
-      <td>208</td>
-      <td>0</td>
-      <td>Monterey-Salinas Transit</td>
-      <td>Monterey-Salinas Transit</td>
-      <td>http://www.mst.org</td>
-      <td>America/Los_Angeles</td>
-      <td>None</td>
-      <td>1-888-MST-BUS1</td>
-      <td>None</td>
-      <td>None</td>
-      <td>2021-08-21</td>
+      <td>2021-04-16</td>
+      <td>20</td>
     </tr>
     <tr>
       <th>2</th>
-      <td>256</td>
-      <td>0</td>
-      <td>Porterville</td>
-      <td>Porterville Transit</td>
-      <td>http://www.ridept.com</td>
-      <td>America/Los_Angeles</td>
-      <td>None</td>
-      <td>(559) 791-7800</td>
-      <td>http://www.ridept.com</td>
-      <td>None</td>
-      <td>2021-04-15</td>
+      <td>2021-04-17</td>
+      <td>20</td>
     </tr>
     <tr>
       <th>3</th>
-      <td>279</td>
-      <td>0</td>
-      <td>BART</td>
-      <td>Bay Area Rapid Transit</td>
-      <td>https://www.bart.gov/</td>
-      <td>America/Los_Angeles</td>
-      <td>None</td>
-      <td>510-464-6000</td>
-      <td>None</td>
-      <td>None</td>
-      <td>2021-09-02</td>
+      <td>2021-04-18</td>
+      <td>20</td>
     </tr>
     <tr>
       <th>4</th>
-      <td>200</td>
-      <td>0</td>
-      <td>BA</td>
-      <td>Bay Area Rapid Transit</td>
-      <td>https://www.bart.gov/</td>
-      <td>America/Los_Angeles</td>
-      <td>None</td>
-      <td>510-464-6000</td>
-      <td>None</td>
-      <td>None</td>
-      <td>2021-09-22</td>
+      <td>2021-04-19</td>
+      <td>20</td>
     </tr>
   </tbody>
 </table>
@@ -14694,18 +14816,44 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="sql">sql<a class="anchor-link" href="#sql">&#182;</a></h3>
+<h2 id="2.-Number-of-Stops-for-a-Given-Agency-Over-Time">2. Number of Stops for a Given Agency Over Time<a class="anchor-link" href="#2.-Number-of-Stops-for-a-Given-Agency-Over-Time">&#182;</a></h2>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feed_stops<br>
+<strong>Secondary Tables</strong> →  views.gtfs_schedule_dim_feeds</p>
+<p><em>Time</em> → date (GROUP BY)<br>
+<em>Geography</em> → stop_key (COUNT)<br>
+<em>Agency</em> → Join w/ views.gtfs_schedule_dim_feeds on feed_key for calitp_feed_name (GROUP BY)</p>
+
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[3]:</div>
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[4]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
      <div class="CodeMirror cm-s-jupyter">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">query_sql</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
 
-<span class="s2">SELECT COUNT(*) AS n</span>
-<span class="s2">FROM gtfs_schedule.agency</span>
+<span class="s2">SELECT</span>
+<span class="s2">    calitp_feed_name,</span>
+<span class="s2">    date,</span>
+<span class="s2">    count(*) AS count_stops</span>
+<span class="s2">FROM `views.gtfs_schedule_fact_daily_feed_stops`</span>
+<span class="s2">JOIN `views.gtfs_schedule_dim_feeds` USING (feed_key)</span>
+<span class="s2">WHERE</span>
+<span class="s2">    calitp_feed_name = &quot;Unitrans (0)&quot;</span>
+<span class="s2">GROUP BY</span>
+<span class="s2">    1, 2</span>
+<span class="s2">ORDER BY</span>
+<span class="s2">    date</span>
+<span class="s2">LIMIT 10</span>
 
 <span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
 </pre></div>
@@ -14723,7 +14871,7 @@ a.anchor-link {
 <div class="jp-OutputArea-child">
 
     
-    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[3]:</div>
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[4]:</div>
 
 
 
@@ -14746,17 +14894,855 @@ a.anchor-link {
   <thead>
     <tr style="text-align: right;">
       <th></th>
+      <th>calitp_feed_name</th>
+      <th>date</th>
+      <th>count_stops</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Unitrans (0)</td>
+      <td>2021-04-15</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Unitrans (0)</td>
+      <td>2021-04-16</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Unitrans (0)</td>
+      <td>2021-04-17</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Unitrans (0)</td>
+      <td>2021-04-18</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Unitrans (0)</td>
+      <td>2021-04-19</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>Unitrans (0)</td>
+      <td>2021-04-20</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>Unitrans (0)</td>
+      <td>2021-04-21</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>7</th>
+      <td>Unitrans (0)</td>
+      <td>2021-04-22</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>8</th>
+      <td>Unitrans (0)</td>
+      <td>2021-04-23</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>9</th>
+      <td>Unitrans (0)</td>
+      <td>2021-04-24</td>
+      <td>298</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → Gtfs Schedule Fact Daily Feed Stops</p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><img src="assets/stops_agency_over_time.png" alt=""></p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h3>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[5]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">## Join to get CalITP Feed Names</span>
+<span class="c1">## Count stops by date and CalITP Feed Names, order by date, filter by specific calitp_feed_name</span>
+
+<span class="p">(</span>
+    <span class="n">tbl</span><span class="o">.</span><span class="n">views</span><span class="o">.</span><span class="n">gtfs_schedule_fact_daily_feed_stops</span><span class="p">()</span>
+    <span class="o">&gt;&gt;</span> <span class="n">left_join</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">tbl</span><span class="o">.</span><span class="n">views</span><span class="o">.</span><span class="n">gtfs_schedule_dim_feeds</span><span class="p">(),</span> <span class="s2">&quot;feed_key&quot;</span><span class="p">)</span>
+    <span class="o">&gt;&gt;</span> <span class="n">count</span><span class="p">(</span><span class="n">_</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="n">_</span><span class="o">.</span><span class="n">calitp_feed_name</span><span class="p">)</span>
+    <span class="o">&gt;&gt;</span> <span class="nb">filter</span><span class="p">(</span><span class="n">_</span><span class="o">.</span><span class="n">calitp_feed_name</span> <span class="o">==</span> <span class="s2">&quot;Unitrans (0)&quot;</span><span class="p">)</span>
+    <span class="o">&gt;&gt;</span> <span class="n">arrange</span><span class="p">(</span><span class="n">_</span><span class="o">.</span><span class="n">date</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[5]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div><pre># Source: lazy query
+# DB Conn: Engine(bigquery://cal-itp-data-infra/?maximum_bytes_billed=5000000000)
+# Preview:
+</pre><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>date</th>
+      <th>calitp_feed_name</th>
       <th>n</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
-      <td>304</td>
+      <td>2021-04-15</td>
+      <td>Unitrans (0)</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>2021-04-16</td>
+      <td>Unitrans (0)</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>2021-04-17</td>
+      <td>Unitrans (0)</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>2021-04-18</td>
+      <td>Unitrans (0)</td>
+      <td>298</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>2021-04-19</td>
+      <td>Unitrans (0)</td>
+      <td>298</td>
+    </tr>
+  </tbody>
+</table>
+</div><p># .. may have more rows</p></div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="3.-Number-of-Stops-Made-Across-all-Trips-for-an-Agency">3. Number of Stops Made Across all Trips for an Agency<a class="anchor-link" href="#3.-Number-of-Stops-Made-Across-all-Trips-for-an-Agency">&#182;</a></h2>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_data_feed_trip_stops_latest<br>
+<strong>Secondary Tables</strong> →  views.gtfs_schedule_fact_daily_trips<br>
+                        views.gtfs_agency_names</p>
+<p><em>Time</em> → no variable - this table only has information for the current day<br>
+<em>Geography</em> → stop_time_key (COUNT)<br>
+<em>Agency</em> → calitp_feed_name (GROUP BY)</p>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[6]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">query_sql</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+
+<span class="s2">SELECT</span>
+<span class="s2">    calitp_feed_name,</span>
+
+<span class="s2">    count(*) AS n_trip_stops,</span>
+<span class="s2">    count(distinct(trip_id)) AS n_trips,</span>
+<span class="s2">    count(distinct(stop_id)) AS n_stops</span>
+<span class="s2">FROM `views.gtfs_schedule_data_feed_trip_stops_latest`</span>
+<span class="s2">WHERE</span>
+<span class="s2">    calitp_feed_name = &quot;Unitrans (0)&quot;</span>
+<span class="s2">GROUP BY</span>
+<span class="s2">    calitp_feed_name</span>
+
+<span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[6]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>calitp_feed_name</th>
+      <th>n_trip_stops</th>
+      <th>n_trips</th>
+      <th>n_stops</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Unitrans (0)</td>
+      <td>74082</td>
+      <td>5190</td>
+      <td>275</td>
     </tr>
   </tbody>
 </table>
 </div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → Gtfs Schedule Data Feed Trip Stops Latest</p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><em>Count of Trip Stops Made Across all Trips for an Agency</em></p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><img src="assets/count_trip_stops.png" alt=""></p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><em>Distinct Trips in Trip Stops</em></p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><img src="assets/distinct_trips_in_trip_stops.png" alt=""></p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><em>Distinct Stops in Trip Stops</em></p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><img src="assets/distinct_stops_in_trip_stops.png" alt=""></p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h3>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[7]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="p">(</span>
+    <span class="n">tbl</span><span class="o">.</span><span class="n">views</span><span class="o">.</span><span class="n">gtfs_schedule_data_feed_trip_stops_latest</span><span class="p">()</span>
+    <span class="o">&gt;&gt;</span> <span class="nb">filter</span><span class="p">(</span><span class="n">_</span><span class="o">.</span><span class="n">calitp_feed_name</span> <span class="o">==</span> <span class="s2">&quot;Unitrans (0)&quot;</span><span class="p">)</span>
+    <span class="o">&gt;&gt;</span> <span class="n">summarize</span><span class="p">(</span>
+        <span class="n">n_trips</span><span class="o">=</span><span class="n">_</span><span class="o">.</span><span class="n">trip_id</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">n_stops</span><span class="o">=</span><span class="n">_</span><span class="o">.</span><span class="n">stop_id</span><span class="o">.</span><span class="n">nunique</span><span class="p">(),</span> <span class="n">n</span><span class="o">=</span><span class="n">_</span><span class="o">.</span><span class="n">trip_id</span><span class="o">.</span><span class="n">size</span><span class="p">()</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div><pre># Source: lazy query
+# DB Conn: Engine(bigquery://cal-itp-data-infra/?maximum_bytes_billed=5000000000)
+# Preview:
+</pre><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>n_trips</th>
+      <th>n_stops</th>
+      <th>n</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>5190</td>
+      <td>275</td>
+      <td>74082</td>
+    </tr>
+  </tbody>
+</table>
+</div><p># .. may have more rows</p></div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="4.-For-a-Given-Agency,-on-Each-Day,-Days-Until-the-Feed-Expires">4. For a Given Agency, on Each Day, Days Until the Feed Expires<a class="anchor-link" href="#4.-For-a-Given-Agency,-on-Each-Day,-Days-Until-the-Feed-Expires">&#182;</a></h2>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feeds<br>
+<strong>Secondary Fact Table</strong> → views.gtfs_schedule_dim_feeds</p>
+<p><em>Time</em> → date, feed_end_date<br>
+<em>Measure</em> → days_until_feed_end_date<br>
+<em>Agency</em> → calitp_feed_name (GROUP BY)</p>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[8]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">query_sql</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+
+<span class="s2">SELECT</span>
+<span class="s2">    calitp_feed_name,</span>
+<span class="s2">    date,</span>
+<span class="s2">    days_until_feed_end_date,</span>
+<span class="s2">    feed_end_date</span>
+<span class="s2">FROM views.gtfs_schedule_fact_daily_feeds</span>
+<span class="s2">JOIN views.gtfs_schedule_dim_feeds USING (feed_key)</span>
+<span class="s2">WHERE</span>
+<span class="s2">    date = &quot;2021-09-01&quot; AND calitp_feed_name = &quot;Unitrans (0)&quot;</span>
+
+<span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[8]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>calitp_feed_name</th>
+      <th>date</th>
+      <th>days_until_feed_end_date</th>
+      <th>feed_end_date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-01</td>
+      <td>20</td>
+      <td>2021-09-21</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feeds<br>
+<strong>Secondary Fact Table</strong> → views.gtfs_schedule_dim_feeds</p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><img src="assets/days_until_agency_feed_expires.png" alt=""></p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feeds<br>
+<strong>Secondary Fact Table</strong> → views.gtfs_schedule_dim_feeds</p>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[9]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="p">(</span>
+    <span class="n">tbl</span><span class="o">.</span><span class="n">views</span><span class="o">.</span><span class="n">gtfs_schedule_fact_daily_feeds</span><span class="p">()</span>
+    <span class="o">&gt;&gt;</span> <span class="n">left_join</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">tbl</span><span class="o">.</span><span class="n">views</span><span class="o">.</span><span class="n">gtfs_schedule_dim_feeds</span><span class="p">(),</span> <span class="s2">&quot;feed_key&quot;</span><span class="p">)</span>
+    <span class="o">&gt;&gt;</span> <span class="n">select</span><span class="p">(</span><span class="n">_</span><span class="o">.</span><span class="n">calitp_feed_name</span><span class="p">,</span> <span class="n">_</span><span class="o">.</span><span class="n">date</span><span class="p">,</span> <span class="n">_</span><span class="o">.</span><span class="n">days_until_feed_end_date</span><span class="p">,</span> <span class="n">_</span><span class="o">.</span><span class="n">feed_end_date</span><span class="p">)</span>
+    <span class="o">&gt;&gt;</span> <span class="nb">filter</span><span class="p">(</span><span class="n">_</span><span class="o">.</span><span class="n">date</span> <span class="o">==</span> <span class="s2">&quot;2021-09-01&quot;</span><span class="p">,</span> <span class="n">_</span><span class="o">.</span><span class="n">calitp_feed_name</span> <span class="o">==</span> <span class="s2">&quot;Unitrans (0)&quot;</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[9]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div><pre># Source: lazy query
+# DB Conn: Engine(bigquery://cal-itp-data-infra/?maximum_bytes_billed=5000000000)
+# Preview:
+</pre><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>calitp_feed_name</th>
+      <th>date</th>
+      <th>days_until_feed_end_date</th>
+      <th>feed_end_date</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Unitrans (0)</td>
+      <td>2021-09-01</td>
+      <td>20</td>
+      <td>2021-09-21</td>
+    </tr>
+  </tbody>
+</table>
+</div><p># .. may have more rows</p></div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="5.-Max-Number-of-Stops-a-Trip-Can-Have,-Per-Agency">5. Max Number of Stops a Trip Can Have, Per Agency<a class="anchor-link" href="#5.-Max-Number-of-Stops-a-Trip-Can-Have,-Per-Agency">&#182;</a></h2>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> →  views.gtfs_schedule_data_feed_trip_stops_latest
+<strong>Secondary Tables</strong> →  views.gtfs_schedule_dim_feeds</p>
+<p><em>Time</em> → date (GROUP BY)<br>
+<em>Geography</em> → trip_id (GROUP BY)<br>
+<em>Geography</em> → count (COUNT)<br>
+<em>Agency</em> → Join w/ views.gtfs_schedule_dim_feeds on feed_key for calitp_feed_name (GROUP BY)</p>
+
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[10]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">query_sql</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+
+<span class="s2">WITH</span>
+
+<span class="s2">counting_stop_times AS (</span>
+
+<span class="s2">    -- count the number of stops each trip in each feed makes</span>
+<span class="s2">    SELECT</span>
+<span class="s2">        trip_id,</span>
+<span class="s2">        calitp_feed_name,</span>
+<span class="s2">        COUNT(*) AS n_trip_stop_times</span>
+<span class="s2">    FROM `views.gtfs_schedule_data_feed_trip_stops_latest`</span>
+<span class="s2">    GROUP BY</span>
+<span class="s2">        1, 2</span>
+<span class="s2">)</span>
+
+<span class="s2">-- calculate the max number of stops made by a feed&#39;s trip</span>
+<span class="s2">-- we filter to keep only the Unitrans feed for this example</span>
+<span class="s2">SELECT</span>
+<span class="s2">    calitp_feed_name,</span>
+<span class="s2">    MAX(n_trip_stop_times) AS max_n_trip_stop_times</span>
+<span class="s2">FROM</span>
+<span class="s2">    counting_stop_times</span>
+<span class="s2">WHERE</span>
+<span class="s2">     calitp_feed_name = &quot;Unitrans (0)&quot;</span>
+<span class="s2">GROUP BY</span>
+<span class="s2">    calitp_feed_name</span>
+
+
+<span class="s2">&quot;&quot;&quot;</span><span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>calitp_feed_name</th>
+      <th>max_n_trip_stop_times</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>Unitrans (0)</td>
+      <td>43</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_data_feed_trip_stops_latest</p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><img src="assets/max_stops_per_trip_by_agency.png" alt=""></p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h3>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[11]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+     <div class="CodeMirror cm-s-jupyter">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="p">(</span>
+    <span class="n">tbl</span><span class="o">.</span><span class="n">views</span><span class="o">.</span><span class="n">gtfs_schedule_data_feed_trip_stops_latest</span><span class="p">()</span>
+    <span class="o">&gt;&gt;</span> <span class="n">count</span><span class="p">(</span><span class="n">_</span><span class="o">.</span><span class="n">trip_id</span><span class="p">,</span> <span class="n">_</span><span class="o">.</span><span class="n">calitp_feed_name</span><span class="p">)</span>
+    <span class="o">&gt;&gt;</span> <span class="nb">filter</span><span class="p">(</span><span class="n">_</span><span class="o">.</span><span class="n">calitp_feed_name</span> <span class="o">==</span> <span class="s2">&quot;Unitrans (0)&quot;</span><span class="p">)</span>
+    <span class="o">&gt;&gt;</span> <span class="n">summarize</span><span class="p">(</span><span class="n">n_max</span><span class="o">=</span><span class="n">_</span><span class="o">.</span><span class="n">n</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+<span class="p">)</span>
+</pre></div>
+
+     </div>
+</div>
+</div>
+</div>
+
+<div class="jp-Cell-outputWrapper">
+
+
+<div class="jp-OutputArea jp-Cell-outputArea">
+
+<div class="jp-OutputArea-child">
+
+    
+    <div class="jp-OutputPrompt jp-OutputArea-prompt">Out[11]:</div>
+
+
+
+<div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html">
+<div><pre># Source: lazy query
+# DB Conn: Engine(bigquery://cal-itp-data-infra/?maximum_bytes_billed=5000000000)
+# Preview:
+</pre><div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>n_max</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>43</td>
+    </tr>
+  </tbody>
+</table>
+</div><p># .. may have more rows</p></div>
 </div>
 
 </div>
