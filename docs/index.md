@@ -5,7 +5,6 @@ from calitp.tables import tbl
 from calitp import query_sql
 from siuba import *
 import pandas as pd
-from sqlfluff import fix
 pd.set_option("display.max_rows", 20)
 ```
 
