@@ -15,7 +15,7 @@ pd.set_option("display.max_rows", 20)
 
 
 **Primary Fact Table** → views.gtfs_schedule_fact_daily_feed_routes  
-**Secondary Tables** →  views.gtfs_schedule_dim_feeds
+**Secondary Table** →  views.gtfs_schedule_dim_feeds
 
 *Time* → date (GROUP BY)  
 *Geography* → route_key (COUNT)  
