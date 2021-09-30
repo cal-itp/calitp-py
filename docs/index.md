@@ -47,7 +47,7 @@ LIMIT 10
 **Primary Fact Table** → Gtfs Schedule Fact Daily Feed Routes
 
 
-<img src="assets/routes_agency_over_time.png" alt="Drawing" style="width: 700px;"/>
+<img src="assets/routes_agency_over_time.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
 ### Siuba
@@ -104,7 +104,7 @@ LIMIT 10
 **Primary Fact Table** → Gtfs Schedule Fact Daily Feed Stops
 
 
-![](assets/stops_agency_over_time.png)
+<img src="assets/stops_agency_over_time.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
 ### Siuba
@@ -160,22 +160,22 @@ GROUP BY
 **Primary Fact Table** → Gtfs Schedule Data Feed Trip Stops Latest
 
 
-*Count of Trip Stops Made Across all Trips for an Agency*
+***Count of Trip Stops Made Across all Trips for an Agency***
 
 
-![](assets/count_trip_stops.png)
+<img src="assets/count_trip_stops.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
-*Distinct Trips in Trip Stops*
+***Distinct Trips in Trip Stops***
 
 
-![](assets/distinct_trips_in_trip_stops.png)
+<img src="assets/distinct_trips_in_trip_stops.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
-*Distinct Stops in Trip Stops*
+***Distinct Stops in Trip Stops***
 
 
-![](assets/distinct_stops_in_trip_stops.png)
+<img src="assets/distinct_stops_in_trip_stops.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
 ### Siuba
@@ -226,7 +226,7 @@ WHERE
 **Secondary Fact Table** → views.gtfs_schedule_dim_feeds
 
 
-![](assets/days_until_agency_feed_expires.png)
+<img src="assets/days_until_agency_feed_expires.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
 ### Siuba
@@ -297,7 +297,7 @@ GROUP BY
 **Primary Fact Table** → views.gtfs_schedule_data_feed_trip_stops_latest
 
 
-![](assets/max_stops_per_trip_by_agency.png)
+<img src="assets/max_stops_per_trip_by_agency.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
 ### Siuba
