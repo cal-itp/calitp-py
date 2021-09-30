@@ -3,11 +3,11 @@ import gcsfs
 from .config import is_cloud, get_bucket, require_pipeline
 
 
-def get_fs(gcs_project=""):
+def get_fs(**kwargs):
     if is_cloud():
-        return gcsfs.GCSFileSystem(project=gcs_project, token="cloud")
+        return gcsfs.GCSFileSystem(project=gcs_project, token="cloud", **kwargs)
     else:
-        return gcsfs.GCSFileSystem(project=gcs_project, token="google_default")
+        return gcsfs.GCSFileSystem(project=gcs_project, token="google_default", **kwargs)
 
 
 @require_pipeline("save_to_gcfs")
