@@ -47,7 +47,7 @@ LIMIT 10
 **Primary Fact Table** → Gtfs Schedule Fact Daily Feed Routes
 
 
-![](assets/routes_agency_over_time.png)
+<img src="assets/routes_agency_over_time.png" alt="Drawing" style="width: 700px;"/>
 
 
 ### Siuba
