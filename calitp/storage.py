@@ -3,7 +3,7 @@ import gcsfs
 from .config import is_cloud, get_bucket, require_pipeline
 
 
-def get_fs(**kwargs):
+def get_fs(gcs_project="", **kwargs):
     if is_cloud():
         return gcsfs.GCSFileSystem(project=gcs_project, token="cloud", **kwargs)
     else:
