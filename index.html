@@ -14515,7 +14515,134 @@ a.anchor-link {
 
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h1 id="Issue-%23329">Issue #329<a class="anchor-link" href="#Issue-%23329">&#182;</a></h1>
+<h1 id="Tutorial---Querying-the-CALITP-Data-Warehouse">Tutorial - Querying the CALITP Data Warehouse<a class="anchor-link" href="#Tutorial---Querying-the-CALITP-Data-Warehouse">&#182;</a></h1>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="Introduction">Introduction<a class="anchor-link" href="#Introduction">&#182;</a></h2>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>The following content represents a tutorial introduction to simple queries that can be made to the calitp data warehouse, and the methods that can be used to perform them.</p>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="The-Queries">The Queries<a class="anchor-link" href="#The-Queries">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>The queries represented below are as follows:</p>
+<ul>
+<li><strong>Number of Routes for a Given Agency Over Time</strong> - observing a change in route numbers per agency across time</li>
+<li><strong>Number of Stops for a Given Agency Over Time</strong></li>
+<li><strong>Number of Stops Made Across all Trips for an Agency</strong></li>
+<li><strong>For a Given Agency, on Each Day, Days Until the Feed Expires</strong></li>
+<li><strong>Max Number of Stops a Trip Can Have, Per Agency</strong></li>
+</ul>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="The-Methods">The Methods<a class="anchor-link" href="#The-Methods">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p>The methods that we can use to answer them are:</p>
+<ul>
+<li><strong>SQL</strong></li>
+<li><strong>Python</strong> <ul>
+<li><em>siuba</em> - a convenient data analysis library in Python</li>
+<li><em>calitp</em> - a personalized library to incorporate calitp's needs</li>
+<li><em>pandas</em> - a useful data analysis library, used sparsely in the examples below</li>
+</ul>
+</li>
+<li><strong>Metabase</strong> - our business insights visualization tool</li>
+</ul>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="The-Tables">The Tables<a class="anchor-link" href="#The-Tables">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h4 id="Fact-Tables">Fact Tables<a class="anchor-link" href="#Fact-Tables">&#182;</a></h4><p>These tables contain measurements, metrics, and facts</p>
+<p><strong>Routes</strong></p>
+<ul>
+<li>views.gtfs_schedule_fact_daily_feed_routes<ul>
+<li>(Gtfs Schedule Fact Daily Feed Routes in Metabase)</li>
+</ul>
+</li>
+</ul>
+<p><strong>Stops</strong></p>
+<ul>
+<li>views.gtfs_schedule_fact_daily_feed_stops<ul>
+<li>(Gtfs Schedule Fact Daily Feed Stops in Metabase)</li>
+</ul>
+</li>
+</ul>
+<p><strong>Trips</strong></p>
+<ul>
+<li>views.gtfs_schedule_data_feed_trip_stops_latest<ul>
+<li>(Gtfs Schedule Data Feed Trip Stops Latest in Metabase)</li>
+</ul>
+</li>
+<li>views.gtfs_schedule_fact_daily_trips</li>
+</ul>
+<p><strong>Feeds</strong></p>
+<ul>
+<li>views.gtfs_schedule_fact_daily_feeds  <ul>
+<li>(Gtfs Schedule Fact Daily Feeds in Metabase)</li>
+</ul>
+</li>
+</ul>
+<h4 id="Dimensional-Tables">Dimensional Tables<a class="anchor-link" href="#Dimensional-Tables">&#182;</a></h4><p>These tables compliment the fact tables by providing additional descriptive attributes</p>
+<ul>
+<li>views.gtfs_schedule_dim_feeds - the most common way to join calitp_feed_name (our primary agency identifier) to fact tables<ul>
+<li>(Gtfs Schedule Dim Feeds in Metabase)  </li>
+</ul>
+</li>
+<li>views.gtfs_agency_names</li>
+</ul>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h3 id="Important-Variable-Types-and-Variables">Important Variable Types and Variables<a class="anchor-link" href="#Important-Variable-Types-and-Variables">&#182;</a></h3>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<ul>
+<li><strong>Time</strong></li>
+<li><strong>Geography</strong></li>
+<li><strong>Agency</strong><ul>
+<li>calitp_feed_name - Our primary agency identifier. In most of the examples below, this is gathered from the table <strong>views.gtfs_schedule_dim_feeds</strong></li>
+</ul>
+</li>
+</ul>
+
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h2 id="Query-Examples">Query Examples<a class="anchor-link" href="#Query-Examples">&#182;</a></h2>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><em>Importing Relevant Python Libraries</em></p>
+
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
 <div class="jp-Cell-inputWrapper">
@@ -14538,21 +14665,21 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="1.-Number-of-Routes-for-a-Given-Agency-Over-Time">1. Number of Routes for a Given Agency Over Time<a class="anchor-link" href="#1.-Number-of-Routes-for-a-Given-Agency-Over-Time">&#182;</a></h2>
+<h3 id="1.-Number-of-Routes-for-a-Given-Agency-Over-Time">1. Number of Routes for a Given Agency Over Time<a class="anchor-link" href="#1.-Number-of-Routes-for-a-Given-Agency-Over-Time">&#182;</a></h3>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h3>
+<h4 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h4>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feed_routes<br>
 <strong>Secondary Table</strong> →  views.gtfs_schedule_dim_feeds</p>
-<p><em>Time</em> → date (GROUP BY)<br>
-<em>Geography</em> → route_key (COUNT)<br>
-<em>Agency</em> → Join w/ views.gtfs_schedule_dim_feeds on feed_key for calitp_feed_name (GROUP BY)</p>
+<p><em>Time</em> → <strong>date</strong> (<em>GROUP BY</em>)<br>
+<em>Geography</em> → <strong>route_key</strong> (the unique identifier for each record, to <em>COUNT</em> by)<br>
+<em>Agency</em> → Join with table <strong>views.gtfs_schedule_dim_feeds</strong> on variable <strong>feed_key</strong> for <strong>calitp_feed_name</strong> (<em>GROUP BY</em>)</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
@@ -14696,12 +14823,16 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h3>
+<h4 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h4>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><strong>Primary Fact Table</strong> → Gtfs Schedule Fact Daily Feed Routes</p>
+<p><strong>Primary Fact Table</strong> → Gtfs Schedule Fact Daily Feed Routes<br>
+<strong>Secondary Fact Table</strong> → Gtfs Schedule Dim Feeds</p>
+<p><em>Time</em> → <strong>Date</strong> (<em>FILTER</em>)<br>
+<em>Geography</em> → <strong>Route Key</strong> (the unique identifier for each record, to <em>COUNT</em> by)<br>
+<em>Agency</em> → Metabase automatically joins with table <strong>Gtfs Schedule Dim Feeds</strong> on variable <strong>Feed Key</strong> to get <strong>Calitp Feed Name</strong> (<em>FILTER</em>)</p>
 
 </div>
 </div>
@@ -14713,7 +14844,17 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h3>
+<h4 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h4>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feed_routes<br>
+<strong>Secondary Table</strong> →  views.gtfs_schedule_dim_feeds</p>
+<p><em>Time</em> → <strong>date</strong> (<em>COUNT</em> by)<br>
+<em>Geography</em> → <strong>route_key</strong> (the unique identifier for each record)<br>
+<em>Agency</em> → Join with table <strong>views.gtfs_schedule_dim_feeds</strong> on variable <strong>feed_key</strong> for <strong>calitp_feed_name</strong> (<em>FILTER</em> by)</p>
+
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
@@ -14816,21 +14957,21 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="2.-Number-of-Stops-for-a-Given-Agency-Over-Time">2. Number of Stops for a Given Agency Over Time<a class="anchor-link" href="#2.-Number-of-Stops-for-a-Given-Agency-Over-Time">&#182;</a></h2>
+<h3 id="2.-Number-of-Stops-for-a-Given-Agency-Over-Time">2. Number of Stops for a Given Agency Over Time<a class="anchor-link" href="#2.-Number-of-Stops-for-a-Given-Agency-Over-Time">&#182;</a></h3>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h3>
+<h4 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h4>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feed_stops<br>
 <strong>Secondary Tables</strong> →  views.gtfs_schedule_dim_feeds</p>
-<p><em>Time</em> → date (GROUP BY)<br>
-<em>Geography</em> → stop_key (COUNT)<br>
-<em>Agency</em> → Join w/ views.gtfs_schedule_dim_feeds on feed_key for calitp_feed_name (GROUP BY)</p>
+<p><em>Time</em> → <strong>date</strong> (<em>GROUP BY</em>)<br>
+<em>Geography</em> → <strong>stop_key</strong> (the unique identifier for each record, to <em>COUNT</em> by)<br>
+<em>Agency</em> → Join with table <strong>views.gtfs_schedule_dim_feeds</strong> on variable <strong>feed_key</strong> for <strong>calitp_feed_name</strong> (<em>GROUP BY</em>)</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
@@ -14974,12 +15115,16 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h3>
+<h4 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h4>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><strong>Primary Fact Table</strong> → Gtfs Schedule Fact Daily Feed Stops</p>
+<p><strong>Primary Fact Table</strong> → Gtfs Schedule Fact Daily Feed Stops<br>
+<strong>Secondary Fact Table</strong> → Gtfs Schedule Dim Feeds</p>
+<p><em>Time</em> → <strong>Date</strong> (<em>COUNT</em> by)<br>
+<em>Geography</em> → <strong>Stop Key</strong> (the unique identifier for each record, to <em>COUNT</em> by)<br>
+<em>Agency</em> → Metabase automatically joins with table <strong>Gtfs Schedule Dim Feeds</strong> on variable <strong>Feed Key</strong> to get <strong>Calitp Feed Name</strong> (<em>FILTER</em> by)</p>
 
 </div>
 </div>
@@ -14991,7 +15136,17 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h3>
+<h4 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h4>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feed_stops<br>
+<strong>Secondary Tables</strong> →  views.gtfs_schedule_dim_feeds</p>
+<p><em>Time</em> → <strong>date</strong> (<em>GROUP BY</em>)<br>
+<em>Geography</em> → <strong>stop_key</strong> (the unique identifier for each record, to <em>COUNT</em> by)<br>
+<em>Agency</em> → Join with table <strong>views.gtfs_schedule_dim_feeds</strong> on variable <strong>feed_key</strong> for <strong>calitp_feed_name</strong> (<em>GROUP BY</em>)</p>
+
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
@@ -15100,22 +15255,20 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="3.-Number-of-Stops-Made-Across-all-Trips-for-an-Agency">3. Number of Stops Made Across all Trips for an Agency<a class="anchor-link" href="#3.-Number-of-Stops-Made-Across-all-Trips-for-an-Agency">&#182;</a></h2>
+<h3 id="3.-Number-of-Stops-Made-Across-all-Trips-for-an-Agency">3. Number of Stops Made Across all Trips for an Agency<a class="anchor-link" href="#3.-Number-of-Stops-Made-Across-all-Trips-for-an-Agency">&#182;</a></h3>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h3>
+<h4 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h4>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_data_feed_trip_stops_latest<br>
-<strong>Secondary Tables</strong> →  views.gtfs_schedule_fact_daily_trips<br>
-                        views.gtfs_agency_names</p>
-<p><em>Time</em> → no variable - this table only has information for the current day<br>
-<em>Geography</em> → stop_time_key (COUNT)<br>
-<em>Agency</em> → calitp_feed_name (GROUP BY)</p>
+<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_data_feed_trip_stops_latest</p>
+<p><em>Time</em> → <strong>no variable</strong> - this table only has information for the current day<br>
+<em>Geography</em> → <strong>stop_time_key</strong> (the unique identifier for each record, to <em>COUNT</em> by)<br>
+<em>Agency</em> → <strong>calitp_feed_name</strong> (<em>GROUP BY</em>)</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
@@ -15205,12 +15358,16 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h3>
+<h4 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h4>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><strong>Primary Fact Table</strong> → Gtfs Schedule Data Feed Trip Stops Latest</p>
+<p><strong>Primary Fact Table</strong> → Gtfs Schedule Data Feed Trip Stops Latest<br>
+<strong>Secondary Fact Table</strong> → Gtfs Schedule Dim Feeds</p>
+<p><em>Time</em> → <strong>no variable</strong> - this table only has information for the current day<br>
+<em>Geography</em> → <strong>Stop Time Key</strong> (the unique identifier for each record, to <em>COUNT</em> by)<br>
+<em>Agency</em> → Metabase automatically joins with table <strong>Gtfs Schedule Dim Feeds</strong> on variable <strong>Feed Key</strong> to get <strong>Calitp Feed Name</strong> (<em>FILTER</em> by)</p>
 
 </div>
 </div>
@@ -15252,7 +15409,16 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h3>
+<h4 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h4>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_data_feed_trip_stops_latest</p>
+<p><em>Time</em> → <strong>no variable</strong> - this table only has information for the current day<br>
+<em>Geography</em> → <strong>stop_time_key</strong> (the unique identifier for each record, to <em>COUNT</em> by)<br>
+<em>Agency</em> → <strong>calitp_feed_name</strong> (<em>GROUP BY</em>)</p>
+
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
@@ -15334,21 +15500,21 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="4.-For-a-Given-Agency,-on-Each-Day,-Days-Until-the-Feed-Expires">4. For a Given Agency, on Each Day, Days Until the Feed Expires<a class="anchor-link" href="#4.-For-a-Given-Agency,-on-Each-Day,-Days-Until-the-Feed-Expires">&#182;</a></h2>
+<h3 id="4.-For-a-Given-Agency,-on-Each-Day,-Days-Until-the-Feed-Expires">4. For a Given Agency, on Each Day, Days Until the Feed Expires<a class="anchor-link" href="#4.-For-a-Given-Agency,-on-Each-Day,-Days-Until-the-Feed-Expires">&#182;</a></h3>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h3>
+<h4 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h4>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feeds<br>
 <strong>Secondary Fact Table</strong> → views.gtfs_schedule_dim_feeds</p>
-<p><em>Time</em> → date, feed_end_date<br>
-<em>Measure</em> → days_until_feed_end_date<br>
-<em>Agency</em> → calitp_feed_name (GROUP BY)</p>
+<p><em>Time</em> → <strong>date</strong>, <strong>feed_end_date</strong><br>
+<em>Measure</em> → <strong>days_until_feed_end_date</strong><br>
+<em>Agency</em> → Join with table <strong>views.gtfs_schedule_dim_feeds</strong> on variable <strong>feed_key</strong> for <strong>calitp_feed_name</strong> (<em>GROUP BY</em>)</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
@@ -15436,13 +15602,29 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h3>
+<h4 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h4>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feeds<br>
-<strong>Secondary Fact Table</strong> → views.gtfs_schedule_dim_feeds</p>
+<p><strong>Primary Fact Table</strong> → Gtfs Schedule Fact Daily Feeds<br>
+<strong>Secondary Fact Table</strong> → Join: Gtfs Schedule Dim Feeds</p>
+<p><em>Time</em> → <strong>Date</strong>, <strong>Feed End Date</strong><br>
+<em>Measure</em> → <strong>Days Until Feed End Date</strong><br>
+<em>Agency</em> → Join with table <strong>Gtfs Schedule Dim Feeds</strong> on variable <strong>feed_key</strong> for <strong>Calitp Feed Name</strong> (<em>FILTER</em> by) and <strong>Feed End Date</strong></p>
+<p><strong>Columns to Select:</strong></p>
+<ul>
+<li>Gtfs Schedule Fact Daily Feeds<ul>
+<li>Date</li>
+<li>Days Until Feed End Date</li>
+</ul>
+</li>
+<li>Gtfs Schedule Dim Feeds<ul>
+<li>Calitp Feed Name</li>
+<li>Feed End Date</li>
+</ul>
+</li>
+</ul>
 
 </div>
 </div>
@@ -15454,13 +15636,16 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h3>
+<h4 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h4>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p><strong>Primary Fact Table</strong> → views.gtfs_schedule_fact_daily_feeds<br>
 <strong>Secondary Fact Table</strong> → views.gtfs_schedule_dim_feeds</p>
+<p><em>Time</em> → <strong>date</strong> (<em>FILTER</em> by), <strong>feed_end_date</strong><br>
+<em>Measure</em> → <strong>days_until_feed_end_date</strong><br>
+<em>Agency</em> → Join with table <strong>views.gtfs_schedule_dim_feeds</strong> on variable <strong>feed_key</strong> for <strong>calitp_feed_name</strong> (<em>FILTER</em> by)</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
@@ -15544,22 +15729,21 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h2 id="5.-Max-Number-of-Stops-a-Trip-Can-Have,-Per-Agency">5. Max Number of Stops a Trip Can Have, Per Agency<a class="anchor-link" href="#5.-Max-Number-of-Stops-a-Trip-Can-Have,-Per-Agency">&#182;</a></h2>
+<h3 id="5.-Max-Number-of-Stops-a-Trip-Can-Have,-Per-Agency">5. Max Number of Stops a Trip Can Have, Per Agency<a class="anchor-link" href="#5.-Max-Number-of-Stops-a-Trip-Can-Have,-Per-Agency">&#182;</a></h3>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h3>
+<h4 id="SQL">SQL<a class="anchor-link" href="#SQL">&#182;</a></h4>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><strong>Primary Fact Table</strong> →  views.gtfs_schedule_data_feed_trip_stops_latest
+<p><strong>Primary Fact Table</strong> →  views.gtfs_schedule_data_feed_trip_stops_latest<br>
 <strong>Secondary Tables</strong> →  views.gtfs_schedule_dim_feeds</p>
-<p><em>Time</em> → date (GROUP BY)<br>
-<em>Geography</em> → trip_id (GROUP BY)<br>
-<em>Geography</em> → count (COUNT)<br>
-<em>Agency</em> → Join w/ views.gtfs_schedule_dim_feeds on feed_key for calitp_feed_name (GROUP BY)</p>
+<p><em>Time</em> → <strong>no variable</strong>, finding max across all days<br>
+<em>Geography</em> → <strong>trip_id</strong> (the unique identifier for each record, to <em>GROUP BY</em>)<br>
+<em>Agency</em> → Join with table <strong>views.gtfs_schedule_dim_feeds</strong> on variable <strong>feed_key</strong> for <strong>calitp_feed_name</strong> (<em>GROUP BY</em>)</p>
 
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
@@ -15660,12 +15844,16 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h3>
+<h4 id="Metabase">Metabase<a class="anchor-link" href="#Metabase">&#182;</a></h4>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><strong>Primary Fact Table</strong> → views.gtfs_schedule_data_feed_trip_stops_latest</p>
+<p><strong>Primary Fact Table</strong> → Gtfs Schedule Data Feed Trip Stops Latest<br>
+<strong>Secondary Fact Table</strong> → Gtfs Schedule Dim Feeds</p>
+<p><em>Time</em> → <strong>no variable</strong>, finding max across all days<br>
+<em>Geography</em> → <strong>Trip ID</strong> (the unique identifier for each record, to <em>COUNT</em> by)<br>
+<em>Agency</em> → Metabase automatically joins with table <strong>Gtfs Schedule Dim Feeds</strong> on variable <strong>Feed Key</strong> to get <strong>Calitp Feed Name</strong> (<em>COUNT</em> by)</p>
 
 </div>
 </div>
@@ -15677,7 +15865,17 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h3>
+<h4 id="Siuba">Siuba<a class="anchor-link" href="#Siuba">&#182;</a></h4>
+</div>
+</div>
+<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<p><strong>Primary Fact Table</strong> →  views.gtfs_schedule_data_feed_trip_stops_latest<br>
+<strong>Secondary Tables</strong> →  views.gtfs_schedule_dim_feeds</p>
+<p><em>Time</em> → <strong>no variable</strong>, finding max across all days<br>
+<em>Geography</em> → <strong>trip_id</strong> (the unique identifier for each record, to <em>GROUP BY</em>)<br>
+<em>Agency</em> → Join with table <strong>views.gtfs_schedule_dim_feeds</strong> on variable <strong>feed_key</strong> for <strong>calitp_feed_name</strong> (<em>GROUP BY</em>)</p>
+
 </div>
 </div><div class="jp-Cell jp-CodeCell jp-Notebook-cell   ">
 <div class="jp-Cell-inputWrapper">
