@@ -1,4 +1,79 @@
-# Issue #329
+# Tutorial - Querying the CALITP Data Warehouse
+
+
+## Introduction
+
+
+The following content represents a tutorial introduction to simple queries that can be made to the calitp data warehouse, and the methods that can be used to perform them.
+
+
+### The Queries
+
+
+The queries represented below are as follows:
+* **Number of Routes for a Given Agency Over Time** - observing a change in route numbers per agency across time
+* **Number of Stops for a Given Agency Over Time**
+* **Number of Stops Made Across all Trips for an Agency**
+* **For a Given Agency, on Each Day, Days Until the Feed Expires**
+* **Max Number of Stops a Trip Can Have, Per Agency**
+
+
+### The Methods
+
+
+The methods that we can use to answer them are:
+* **SQL**
+* **Python** 
+    * *siuba* - a convenient data analysis library in Python
+    * *calitp* - a personalized library to incorporate calitp's needs
+    * *pandas* - a useful data analysis library, used sparsely in the examples below
+* **Metabase** - our business insights visualization tool
+
+
+### The Tables
+
+
+#### Fact Tables  
+These tables contain measurements, metrics, and facts  
+
+**Routes**
+* views.gtfs_schedule_fact_daily_feed_routes
+    * (Gtfs Schedule Fact Daily Feed Routes in Metabase)
+
+**Stops**  
+* views.gtfs_schedule_fact_daily_feed_stops
+    * (Gtfs Schedule Fact Daily Feed Stops in Metabase)
+
+**Trips**
+* views.gtfs_schedule_data_feed_trip_stops_latest
+    * (Gtfs Schedule Data Feed Trip Stops Latest in Metabase)
+* views.gtfs_schedule_fact_daily_trips
+
+**Feeds**
+* views.gtfs_schedule_fact_daily_feeds  
+    * (Gtfs Schedule Fact Daily Feeds in Metabase)
+
+#### Dimensional Tables  
+These tables compliment the fact tables by providing additional descriptive attributes
+* views.gtfs_schedule_dim_feeds - the most common way to join calitp_feed_name (our primary agency identifier) to fact tables
+    * (Gtfs Schedule Dim Feeds in Metabase)  
+* views.gtfs_agency_names
+
+
+
+### Important Variable Types and Variables
+
+
+- **Time**
+- **Geography**
+- **Agency**
+    * calitp_feed_name - Our primary agency identifier. In most of the examples below, this is gathered from the table **views.gtfs_schedule_dim_feeds**
+
+
+## Query Examples
+
+
+*Importing Relevant Python Libraries*
 
 ```python
 from calitp.tables import tbl
@@ -8,18 +83,18 @@ import pandas as pd
 pd.set_option("display.max_rows", 20)
 ```
 
-## 1. Number of Routes for a Given Agency Over Time
+### 1. Number of Routes for a Given Agency Over Time
 
 
-### SQL
+#### SQL
 
 
 **Primary Fact Table** → views.gtfs_schedule_fact_daily_feed_routes  
 **Secondary Table** →  views.gtfs_schedule_dim_feeds
 
-*Time* → date (GROUP BY)  
-*Geography* → route_key (COUNT)  
-*Agency* → Join w/ views.gtfs_schedule_dim_feeds on feed_key for calitp_feed_name (GROUP BY)
+*Time* → **date** (*GROUP BY*)  
+*Geography* → **route_key** (the unique identifier for each record, to *COUNT* by)    
+*Agency* → Join with table **views.gtfs_schedule_dim_feeds** on variable **feed_key** for **calitp_feed_name** (*GROUP BY*)
 
 ```python
 query_sql("""
@@ -41,16 +116,29 @@ LIMIT 10
 """)
 ```
 
-### Metabase
+#### Metabase
 
 
-**Primary Fact Table** → Gtfs Schedule Fact Daily Feed Routes
+**Primary Fact Table** → Gtfs Schedule Fact Daily Feed Routes  
+**Secondary Fact Table** → Gtfs Schedule Dim Feeds  
+
+*Time* → **Date** (*FILTER*)  
+*Geography* → **Route Key** (the unique identifier for each record, to *COUNT* by)  
+*Agency* → Metabase automatically joins with table **Gtfs Schedule Dim Feeds** on variable **Feed Key** to get **Calitp Feed Name** (*FILTER*)
 
 
 <img src="assets/routes_agency_over_time.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
-### Siuba
+#### Siuba
+
+
+**Primary Fact Table** → views.gtfs_schedule_fact_daily_feed_routes  
+**Secondary Table** →  views.gtfs_schedule_dim_feeds
+
+*Time* → **date** (*COUNT* by)  
+*Geography* → **route_key** (the unique identifier for each record)  
+*Agency* → Join with table **views.gtfs_schedule_dim_feeds** on variable **feed_key** for **calitp_feed_name** (*FILTER* by)
 
 ```python
 # Join to get CalITP Feed Names
@@ -65,18 +153,18 @@ LIMIT 10
 )
 ```
 
-## 2. Number of Stops for a Given Agency Over Time
+### 2. Number of Stops for a Given Agency Over Time
 
 
-### SQL
+#### SQL
 
 
 **Primary Fact Table** → views.gtfs_schedule_fact_daily_feed_stops  
 **Secondary Tables** →  views.gtfs_schedule_dim_feeds  
 
-*Time* → date (GROUP BY)  
-*Geography* → stop_key (COUNT)  
-*Agency* → Join w/ views.gtfs_schedule_dim_feeds on feed_key for calitp_feed_name (GROUP BY)
+*Time* → **date** (*GROUP BY*)  
+*Geography* → **stop_key** (the unique identifier for each record, to *COUNT* by)   
+*Agency* → Join with table **views.gtfs_schedule_dim_feeds** on variable **feed_key** for **calitp_feed_name** (*GROUP BY*)
 
 ```python
 query_sql("""
@@ -98,16 +186,30 @@ LIMIT 10
 """)
 ```
 
-### Metabase
+#### Metabase
+
+<!-- #region -->
+**Primary Fact Table** → Gtfs Schedule Fact Daily Feed Stops  
+**Secondary Fact Table** → Gtfs Schedule Dim Feeds
 
 
-**Primary Fact Table** → Gtfs Schedule Fact Daily Feed Stops
-
+*Time* → **Date** (*COUNT* by)  
+*Geography* → **Stop Key** (the unique identifier for each record, to *COUNT* by)    
+*Agency* → Metabase automatically joins with table **Gtfs Schedule Dim Feeds** on variable **Feed Key** to get **Calitp Feed Name** (*FILTER* by)
+<!-- #endregion -->
 
 <img src="assets/stops_agency_over_time.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
-### Siuba
+#### Siuba
+
+
+**Primary Fact Table** → views.gtfs_schedule_fact_daily_feed_stops  
+**Secondary Tables** →  views.gtfs_schedule_dim_feeds  
+
+*Time* → **date** (*GROUP BY*)  
+*Geography* → **stop_key** (the unique identifier for each record, to *COUNT* by)   
+*Agency* → Join with table **views.gtfs_schedule_dim_feeds** on variable **feed_key** for **calitp_feed_name** (*GROUP BY*)
 
 ```python
 ## Join to get CalITP Feed Names
@@ -122,19 +224,17 @@ LIMIT 10
 )
 ```
 
-## 3. Number of Stops Made Across all Trips for an Agency
+### 3. Number of Stops Made Across all Trips for an Agency
 
 
-### SQL
+#### SQL
 
 
 **Primary Fact Table** → views.gtfs_schedule_data_feed_trip_stops_latest  
-**Secondary Tables** →  views.gtfs_schedule_fact_daily_trips  
-                        views.gtfs_agency_names
 
-*Time* → no variable - this table only has information for the current day  
-*Geography* → stop_time_key (COUNT)  
-*Agency* → calitp_feed_name (GROUP BY)
+*Time* → **no variable** - this table only has information for the current day  
+*Geography* → **stop_time_key** (the unique identifier for each record, to *COUNT* by)    
+*Agency* → **calitp_feed_name** (*GROUP BY*)
 
 ```python
 query_sql("""
@@ -154,10 +254,15 @@ GROUP BY
 """)
 ```
 
-### Metabase
+#### Metabase
 
 
-**Primary Fact Table** → Gtfs Schedule Data Feed Trip Stops Latest
+**Primary Fact Table** → Gtfs Schedule Data Feed Trip Stops Latest  
+**Secondary Fact Table** → Gtfs Schedule Dim Feeds  
+
+*Time* → **no variable** - this table only has information for the current day  
+*Geography* → **Stop Time Key** (the unique identifier for each record, to *COUNT* by)  
+*Agency* → Metabase automatically joins with table **Gtfs Schedule Dim Feeds** on variable **Feed Key** to get **Calitp Feed Name** (*FILTER* by)
 
 
 ***Count of Trip Stops Made Across all Trips for an Agency***
@@ -178,7 +283,14 @@ GROUP BY
 <img src="assets/distinct_stops_in_trip_stops.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
-### Siuba
+#### Siuba
+
+
+**Primary Fact Table** → views.gtfs_schedule_data_feed_trip_stops_latest  
+
+*Time* → **no variable** - this table only has information for the current day  
+*Geography* → **stop_time_key** (the unique identifier for each record, to *COUNT* by)    
+*Agency* → **calitp_feed_name** (*GROUP BY*)
 
 ```python
 (
@@ -190,18 +302,18 @@ GROUP BY
 )
 ```
 
-## 4. For a Given Agency, on Each Day, Days Until the Feed Expires 
+### 4. For a Given Agency, on Each Day, Days Until the Feed Expires 
 
 
-### SQL
+#### SQL
 
 
 **Primary Fact Table** → views.gtfs_schedule_fact_daily_feeds  
 **Secondary Fact Table** → views.gtfs_schedule_dim_feeds
 
-*Time* → date, feed_end_date  
-*Measure* → days_until_feed_end_date  
-*Agency* → calitp_feed_name (GROUP BY)
+*Time* → **date**, **feed_end_date**  
+*Measure* → **days_until_feed_end_date**  
+*Agency* → Join with table **views.gtfs_schedule_dim_feeds** on variable **feed_key** for **calitp_feed_name** (*GROUP BY*)
 
 ```python
 query_sql("""
@@ -219,21 +331,37 @@ WHERE
 """)
 ```
 
-### Metabase
+#### Metabase
 
 
-**Primary Fact Table** → views.gtfs_schedule_fact_daily_feeds  
-**Secondary Fact Table** → views.gtfs_schedule_dim_feeds
+**Primary Fact Table** → Gtfs Schedule Fact Daily Feeds  
+**Secondary Fact Table** → Join: Gtfs Schedule Dim Feeds  
+
+*Time* → **Date**, **Feed End Date**  
+*Measure* → **Days Until Feed End Date**  
+*Agency* → Join with table **Gtfs Schedule Dim Feeds** on variable **feed_key** for **Calitp Feed Name** (*FILTER* by) and **Feed End Date**  
+
+**Columns to Select:**
+* Gtfs Schedule Fact Daily Feeds
+    * Date
+    * Days Until Feed End Date
+* Gtfs Schedule Dim Feeds
+    * Calitp Feed Name
+    * Feed End Date
 
 
 <img src="assets/days_until_agency_feed_expires.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
-### Siuba
+#### Siuba
 
 
 **Primary Fact Table** → views.gtfs_schedule_fact_daily_feeds  
 **Secondary Fact Table** → views.gtfs_schedule_dim_feeds
+
+*Time* → **date** (*FILTER* by), **feed_end_date**  
+*Measure* → **days_until_feed_end_date**  
+*Agency* → Join with table **views.gtfs_schedule_dim_feeds** on variable **feed_key** for **calitp_feed_name** (*FILTER* by)
 
 ```python
 (
@@ -244,19 +372,18 @@ WHERE
 )
 ```
 
-## 5. Max Number of Stops a Trip Can Have, Per Agency
+### 5. Max Number of Stops a Trip Can Have, Per Agency
 
 
-### SQL
+#### SQL
 
 
-**Primary Fact Table** →  views.gtfs_schedule_data_feed_trip_stops_latest
+**Primary Fact Table** →  views.gtfs_schedule_data_feed_trip_stops_latest  
 **Secondary Tables** →  views.gtfs_schedule_dim_feeds
 
-*Time* → date (GROUP BY)  
-*Geography* → trip_id (GROUP BY)  
-*Geography* → count (COUNT)  
-*Agency* → Join w/ views.gtfs_schedule_dim_feeds on feed_key for calitp_feed_name (GROUP BY)
+*Time* → **no variable**, finding max across all days    
+*Geography* → **trip_id** (the unique identifier for each record, to *GROUP BY*)  
+*Agency* → Join with table **views.gtfs_schedule_dim_feeds** on variable **feed_key** for **calitp_feed_name** (*GROUP BY*)
 
 ```python
 query_sql("""
@@ -291,16 +418,29 @@ GROUP BY
 """)
 ```
 
-### Metabase
+#### Metabase
 
 
-**Primary Fact Table** → views.gtfs_schedule_data_feed_trip_stops_latest
+**Primary Fact Table** → Gtfs Schedule Data Feed Trip Stops Latest  
+**Secondary Fact Table** → Gtfs Schedule Dim Feeds  
+
+*Time* → **no variable**, finding max across all days  
+*Geography* → **Trip ID** (the unique identifier for each record, to *COUNT* by)   
+*Agency* → Metabase automatically joins with table **Gtfs Schedule Dim Feeds** on variable **Feed Key** to get **Calitp Feed Name** (*COUNT* by)
 
 
 <img src="assets/max_stops_per_trip_by_agency.png" alt="Metabase Configuration Screenshots" style="width: 700px;"/>
 
 
-### Siuba
+#### Siuba
+
+
+**Primary Fact Table** →  views.gtfs_schedule_data_feed_trip_stops_latest  
+**Secondary Tables** →  views.gtfs_schedule_dim_feeds
+
+*Time* → **no variable**, finding max across all days  
+*Geography* → **trip_id** (the unique identifier for each record, to *GROUP BY*)  
+*Agency* → Join with table **views.gtfs_schedule_dim_feeds** on variable **feed_key** for **calitp_feed_name** (*GROUP BY*)
 
 ```python
 (
