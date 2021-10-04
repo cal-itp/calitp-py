@@ -10,7 +10,7 @@ The following content represents a tutorial introduction to simple queries that 
 ### Example Queries
 
 
-The queries represented below are as follows:
+The queries represented in the following tutorial are as follows:
 * **Number of Routes for a Given Agency Over Time** - observing a change in route numbers per agency across time
 * **Number of Stops for a Given Agency Over Time**
 * **Number of Stops Made Across all Trips for an Agency**
@@ -21,11 +21,11 @@ The queries represented below are as follows:
 ### Available Tools
 
 
-The methods that we can use to answer them are:
+The tools that we can use to answer them are:
 * **SQL** - Using the BigQuery Browser
 * **Python** 
     * *siuba* - a convenient data analysis library in Python
-    * *calitp* - a personalized library to incorporate calitp's needs
+    * *calitp* - a personalized library incorporating calitp's unique needs
     * *pandas* - a useful data analysis library, used sparsely in the examples below
 * **Metabase** - our business insights visualization tool
 
@@ -34,12 +34,12 @@ The methods that we can use to answer them are:
 
 
 #### Fact Tables  
-These tables contain measurements, metrics, and facts used to answer the questions below
+These tables contain measurements, metrics, and facts used to answer the questions from the following perspectives:
 
 **Feeds**
 * views.gtfs_schedule_fact_daily_feeds  
-    * (Gtfs Schedule Fact Daily Feeds in Metabase)
-    
+    * (Gtfs Schedule Fact Daily Feeds in Metabase)  
+
 **Routes**
 * views.gtfs_schedule_fact_daily_feed_routes
     * (Gtfs Schedule Fact Daily Feed Routes in Metabase)
@@ -51,10 +51,9 @@ These tables contain measurements, metrics, and facts used to answer the questio
 **Trips**
 * views.gtfs_schedule_data_feed_trip_stops_latest  
     * (Gtfs Schedule Data Feed Trip Stops Latest in Metabase)  
-* views.gtfs_schedule_fact_daily_trips  
 
 #### Dimensional Tables  
-These tables compliment the fact tables by providing additional descriptive attributes  
+These tables compliment the fact tables by providing additional descriptive attributes:  
 * views.gtfs_schedule_dim_feeds - joining with this table is the most common way to append calitp_feed_name (our primary agency identifier) to fact tables  
     * (Gtfs Schedule Dim Feeds in Metabase)  
 
