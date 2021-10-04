@@ -14578,36 +14578,36 @@ a.anchor-link {
 <h4 id="Fact-Tables">Fact Tables<a class="anchor-link" href="#Fact-Tables">&#182;</a></h4><p>These tables contain measurements, metrics, and facts used to answer the questions from the following perspectives:</p>
 <p><strong>Feeds</strong></p>
 <ul>
-<li>views.gtfs_schedule_fact_daily_feeds  <ul>
-<li>(Gtfs Schedule Fact Daily Feeds in Metabase)  </li>
+<li>views.<strong>gtfs_schedule_fact_daily_feeds</strong>  <ul>
+<li>(<strong>Gtfs Schedule Fact Daily Feeds</strong> in Metabase)  </li>
 </ul>
 </li>
 </ul>
 <p><strong>Routes</strong></p>
 <ul>
-<li>views.gtfs_schedule_fact_daily_feed_routes<ul>
-<li>(Gtfs Schedule Fact Daily Feed Routes in Metabase)</li>
+<li>views.<strong>gtfs_schedule_fact_daily_feed_routes</strong><ul>
+<li>(<strong>Gtfs Schedule Fact Daily Feed Routes</strong> in Metabase)</li>
 </ul>
 </li>
 </ul>
 <p><strong>Stops</strong></p>
 <ul>
-<li>views.gtfs_schedule_fact_daily_feed_stops<ul>
-<li>(Gtfs Schedule Fact Daily Feed Stops in Metabase)</li>
+<li>views.<strong>gtfs_schedule_fact_daily_feed_stops</strong><ul>
+<li>(<strong>Gtfs Schedule Fact Daily Feed Stops</strong> in Metabase)</li>
 </ul>
 </li>
 </ul>
 <p><strong>Trips</strong></p>
 <ul>
-<li>views.gtfs_schedule_data_feed_trip_stops_latest  <ul>
-<li>(Gtfs Schedule Data Feed Trip Stops Latest in Metabase)  </li>
+<li>views.<strong>gtfs_schedule_data_feed_trip_stops_latest</strong>  <ul>
+<li>(<strong>Gtfs Schedule Data Feed Trip Stops Latest</strong> in Metabase)  </li>
 </ul>
 </li>
 </ul>
 <h4 id="Dimensional-Tables">Dimensional Tables<a class="anchor-link" href="#Dimensional-Tables">&#182;</a></h4><p>These tables compliment the fact tables by providing additional descriptive attributes:</p>
 <ul>
-<li>views.gtfs_schedule_dim_feeds - joining with this table is the most common way to append calitp_feed_name (our primary agency identifier) to fact tables  <ul>
-<li>(Gtfs Schedule Dim Feeds in Metabase)  </li>
+<li>views.<strong>gtfs_schedule_dim_feeds</strong> - joining with this table is the most common way to append calitp_feed_name (our primary agency identifier) to fact tables   <ul>
+<li>(<strong>Gtfs Schedule Dim Feeds</strong> in Metabase)  </li>
 </ul>
 </li>
 </ul>
@@ -14623,7 +14623,10 @@ a.anchor-link {
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <ul>
 <li><strong>Agency</strong><ul>
-<li>calitp_feed_name - Our primary agency identifier. In most of the examples below, this is gathered from the table <strong>views.gtfs_schedule_dim_feeds</strong></li>
+<li>calitp_feed_name  <ul>
+<li>Our primary agency identifier - in most of the examples below, this is gathered from the table <strong>views.gtfs_schedule_dim_feeds</strong></li>
+</ul>
+</li>
 </ul>
 </li>
 <li><strong>Time</strong></li>
