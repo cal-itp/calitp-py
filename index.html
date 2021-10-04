@@ -14531,7 +14531,7 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="The-Queries">The Queries<a class="anchor-link" href="#The-Queries">&#182;</a></h3>
+<h3 id="Example-Queries">Example Queries<a class="anchor-link" href="#Example-Queries">&#182;</a></h3>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
@@ -14549,14 +14549,14 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="The-Methods">The Methods<a class="anchor-link" href="#The-Methods">&#182;</a></h3>
+<h3 id="Available-Tools">Available Tools<a class="anchor-link" href="#Available-Tools">&#182;</a></h3>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>The methods that we can use to answer them are:</p>
 <ul>
-<li><strong>SQL</strong></li>
+<li><strong>SQL</strong> - Using the BigQuery Browser</li>
 <li><strong>Python</strong> <ul>
 <li><em>siuba</em> - a convenient data analysis library in Python</li>
 <li><em>calitp</em> - a personalized library to incorporate calitp's needs</li>
@@ -14570,12 +14570,19 @@ a.anchor-link {
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h3 id="The-Tables">The Tables<a class="anchor-link" href="#The-Tables">&#182;</a></h3>
+<h3 id="Relevant-Tables">Relevant Tables<a class="anchor-link" href="#Relevant-Tables">&#182;</a></h3>
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<h4 id="Fact-Tables">Fact Tables<a class="anchor-link" href="#Fact-Tables">&#182;</a></h4><p>These tables contain measurements, metrics, and facts</p>
+<h4 id="Fact-Tables">Fact Tables<a class="anchor-link" href="#Fact-Tables">&#182;</a></h4><p>These tables contain measurements, metrics, and facts used to answer the questions below</p>
+<p><strong>Feeds</strong></p>
+<ul>
+<li>views.gtfs_schedule_fact_daily_feeds  <ul>
+<li>(Gtfs Schedule Fact Daily Feeds in Metabase)</li>
+</ul>
+</li>
+</ul>
 <p><strong>Routes</strong></p>
 <ul>
 <li>views.gtfs_schedule_fact_daily_feed_routes<ul>
@@ -14592,26 +14599,18 @@ a.anchor-link {
 </ul>
 <p><strong>Trips</strong></p>
 <ul>
-<li>views.gtfs_schedule_data_feed_trip_stops_latest<ul>
-<li>(Gtfs Schedule Data Feed Trip Stops Latest in Metabase)</li>
+<li>views.gtfs_schedule_data_feed_trip_stops_latest  <ul>
+<li>(Gtfs Schedule Data Feed Trip Stops Latest in Metabase)  </li>
 </ul>
 </li>
-<li>views.gtfs_schedule_fact_daily_trips</li>
-</ul>
-<p><strong>Feeds</strong></p>
-<ul>
-<li>views.gtfs_schedule_fact_daily_feeds  <ul>
-<li>(Gtfs Schedule Fact Daily Feeds in Metabase)</li>
-</ul>
-</li>
+<li>views.gtfs_schedule_fact_daily_trips  </li>
 </ul>
 <h4 id="Dimensional-Tables">Dimensional Tables<a class="anchor-link" href="#Dimensional-Tables">&#182;</a></h4><p>These tables compliment the fact tables by providing additional descriptive attributes</p>
 <ul>
-<li>views.gtfs_schedule_dim_feeds - the most common way to join calitp_feed_name (our primary agency identifier) to fact tables<ul>
+<li>views.gtfs_schedule_dim_feeds - joining with this table is the most common way to append calitp_feed_name (our primary agency identifier) to fact tables  <ul>
 <li>(Gtfs Schedule Dim Feeds in Metabase)  </li>
 </ul>
 </li>
-<li>views.gtfs_agency_names</li>
 </ul>
 
 </div>
@@ -14624,12 +14623,12 @@ a.anchor-link {
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <ul>
-<li><strong>Time</strong></li>
-<li><strong>Geography</strong></li>
 <li><strong>Agency</strong><ul>
 <li>calitp_feed_name - Our primary agency identifier. In most of the examples below, this is gathered from the table <strong>views.gtfs_schedule_dim_feeds</strong></li>
 </ul>
 </li>
+<li><strong>Time</strong></li>
+<li><strong>Geography</strong></li>
 </ul>
 
 </div>
