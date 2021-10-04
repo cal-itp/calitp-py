@@ -37,32 +37,33 @@ The tools that we can use to answer them are:
 These tables contain measurements, metrics, and facts used to answer the questions from the following perspectives:
 
 **Feeds**
-* views.gtfs_schedule_fact_daily_feeds  
-    * (Gtfs Schedule Fact Daily Feeds in Metabase)  
+* views.**gtfs_schedule_fact_daily_feeds**  
+    * (**Gtfs Schedule Fact Daily Feeds** in Metabase)  
 
 **Routes**
-* views.gtfs_schedule_fact_daily_feed_routes
-    * (Gtfs Schedule Fact Daily Feed Routes in Metabase)
+* views.**gtfs_schedule_fact_daily_feed_routes**
+    * (**Gtfs Schedule Fact Daily Feed Routes** in Metabase)
 
 **Stops**  
-* views.gtfs_schedule_fact_daily_feed_stops
-    * (Gtfs Schedule Fact Daily Feed Stops in Metabase)
+* views.**gtfs_schedule_fact_daily_feed_stops**
+    * (**Gtfs Schedule Fact Daily Feed Stops** in Metabase)
 
 **Trips**
-* views.gtfs_schedule_data_feed_trip_stops_latest  
-    * (Gtfs Schedule Data Feed Trip Stops Latest in Metabase)  
+* views.**gtfs_schedule_data_feed_trip_stops_latest**  
+    * (**Gtfs Schedule Data Feed Trip Stops Latest** in Metabase)  
 
 #### Dimensional Tables  
 These tables compliment the fact tables by providing additional descriptive attributes:  
-* views.gtfs_schedule_dim_feeds - joining with this table is the most common way to append calitp_feed_name (our primary agency identifier) to fact tables  
-    * (Gtfs Schedule Dim Feeds in Metabase)  
+* views.**gtfs_schedule_dim_feeds** - joining with this table is the most common way to append calitp_feed_name (our primary agency identifier) to fact tables   
+    * (**Gtfs Schedule Dim Feeds** in Metabase)  
 
 
 ### Important Variable Types and Variables
 
 
 - **Agency**
-    * calitp_feed_name - Our primary agency identifier. In most of the examples below, this is gathered from the table **views.gtfs_schedule_dim_feeds**
+    * calitp_feed_name  
+        * Our primary agency identifier - in most of the examples below, this is gathered from the table **views.gtfs_schedule_dim_feeds**
 - **Time**
 - **Geography**
 
