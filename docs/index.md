@@ -118,7 +118,7 @@ LIMIT 10
 
 
 **Primary Fact Table** → Gtfs Schedule Fact Daily Feed Routes  
-**Secondary Fact Table** → Gtfs Schedule Dim Feeds  
+**Secondary Table** → Gtfs Schedule Dim Feeds  
 
 *Time* → **Date** (*FILTER*)  
 *Geography* → **Route Key** (the unique identifier for each record, to *COUNT* by)  
@@ -158,7 +158,7 @@ LIMIT 10
 
 
 **Primary Fact Table** → views.gtfs_schedule_fact_daily_feed_stops  
-**Secondary Tables** →  views.gtfs_schedule_dim_feeds  
+**Secondary Table** →  views.gtfs_schedule_dim_feeds  
 
 *Time* → **date** (*GROUP BY*)  
 *Geography* → **stop_key** (the unique identifier for each record, to *COUNT* by)   
@@ -188,7 +188,7 @@ LIMIT 10
 
 <!-- #region -->
 **Primary Fact Table** → Gtfs Schedule Fact Daily Feed Stops  
-**Secondary Fact Table** → Gtfs Schedule Dim Feeds
+**Secondary Table** → Gtfs Schedule Dim Feeds
 
 
 *Time* → **Date** (*COUNT* by)  
@@ -203,7 +203,7 @@ LIMIT 10
 
 
 **Primary Fact Table** → views.gtfs_schedule_fact_daily_feed_stops  
-**Secondary Tables** →  views.gtfs_schedule_dim_feeds  
+**Secondary Table** →  views.gtfs_schedule_dim_feeds  
 
 *Time* → **date** (*GROUP BY*)  
 *Geography* → **stop_key** (the unique identifier for each record, to *COUNT* by)   
@@ -256,7 +256,7 @@ GROUP BY
 
 
 **Primary Fact Table** → Gtfs Schedule Data Feed Trip Stops Latest  
-**Secondary Fact Table** → Gtfs Schedule Dim Feeds  
+**Secondary Table** → Gtfs Schedule Dim Feeds  
 
 *Time* → **no variable** - this table only has information for the current day  
 *Geography* → **Stop Time Key** (the unique identifier for each record, to *COUNT* by)  
@@ -307,7 +307,7 @@ GROUP BY
 
 
 **Primary Fact Table** → views.gtfs_schedule_fact_daily_feeds  
-**Secondary Fact Table** → views.gtfs_schedule_dim_feeds
+**Secondary Table** → views.gtfs_schedule_dim_feeds
 
 *Time* → **date**, **feed_end_date**  
 *Measure* → **days_until_feed_end_date**  
@@ -333,7 +333,7 @@ WHERE
 
 
 **Primary Fact Table** → Gtfs Schedule Fact Daily Feeds  
-**Secondary Fact Table** → Join: Gtfs Schedule Dim Feeds  
+**Secondary Table** → Join: Gtfs Schedule Dim Feeds  
 
 *Time* → **Date**, **Feed End Date**  
 *Measure* → **Days Until Feed End Date**  
@@ -355,7 +355,7 @@ WHERE
 
 
 **Primary Fact Table** → views.gtfs_schedule_fact_daily_feeds  
-**Secondary Fact Table** → views.gtfs_schedule_dim_feeds
+**Secondary Table** → views.gtfs_schedule_dim_feeds
 
 *Time* → **date** (*FILTER* by), **feed_end_date**  
 *Measure* → **days_until_feed_end_date**  
@@ -377,7 +377,7 @@ WHERE
 
 
 **Primary Fact Table** →  views.gtfs_schedule_data_feed_trip_stops_latest  
-**Secondary Tables** →  views.gtfs_schedule_dim_feeds
+**Secondary Table** →  views.gtfs_schedule_dim_feeds
 
 *Time* → **no variable**, finding max across all days    
 *Geography* → **trip_id** (the unique identifier for each record, to *GROUP BY*)  
@@ -420,7 +420,7 @@ GROUP BY
 
 
 **Primary Fact Table** → Gtfs Schedule Data Feed Trip Stops Latest  
-**Secondary Fact Table** → Gtfs Schedule Dim Feeds  
+**Secondary Table** → Gtfs Schedule Dim Feeds  
 
 *Time* → **no variable**, finding max across all days  
 *Geography* → **Trip ID** (the unique identifier for each record, to *COUNT* by)   
@@ -434,7 +434,7 @@ GROUP BY
 
 
 **Primary Fact Table** →  views.gtfs_schedule_data_feed_trip_stops_latest  
-**Secondary Tables** →  views.gtfs_schedule_dim_feeds
+**Secondary Table** →  views.gtfs_schedule_dim_feeds
 
 *Time* → **no variable**, finding max across all days  
 *Geography* → **trip_id** (the unique identifier for each record, to *GROUP BY*)  
