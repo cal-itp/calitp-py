@@ -62,7 +62,7 @@ These tables compliment the fact tables by providing additional descriptive attr
 
 
 - **Agency**
-    * calitp_feed_name  
+    * **calitp_feed_name**  
         * Our primary agency identifier - in most of the examples below, this is gathered from the table **views.gtfs_schedule_dim_feeds**
 - **Time**
 - **Geography**
