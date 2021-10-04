@@ -58,7 +58,7 @@ These tables compliment the fact tables by providing additional descriptive attr
     * (**Gtfs Schedule Dim Feeds** in Metabase)  
 
 
-### Important Variable Types and Variables
+### Important Column Types and Columns
 
 
 - **Agency**
