@@ -9,7 +9,7 @@ jobs:
   build_push:
     name: Package docker image
     runs-on: ubuntu-18.04
-    if: ${{ contains(github.ref, "docker") }}
+    if: ${{ contains(github.ref, 'docker') }}
     steps:
       #- uses: actions/checkout@v2
       - name: Login to GitHub Container Registry
