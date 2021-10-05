@@ -18,6 +18,7 @@ pip install calitp
 
 * `CALITP_BQ_MAX_BYTES`
 * `CALITP_BQ_LOCATION`
+* `CALITP_SERVICE_KEY_PATH` - an optional path to a google service key file.
 * `CALITP_USER`
 * `AIRFLOW_ENV`
 * `AIRFLOW__CORE__DAGS_FOLDER`
