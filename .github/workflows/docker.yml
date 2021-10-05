@@ -21,6 +21,14 @@ jobs:
 
       - name: Build and push
         uses: docker/build-push-action@v2
+        if: ${{ github.event_name == 'release' && github.event.action == 'published' }}
         with:
-          push: ${{ github.event_name == 'release' && github.event.action == 'published' }}
+          push: true
           tags: ghcr.io/${{github.repository}}:${{ github.event.release.tag_name }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v2
+        if: ${{ github.event_name != 'release' }}
+        with:
+          push: false
+          tags: ghcr.io/${{github.repository}}:test
