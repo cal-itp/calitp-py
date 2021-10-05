@@ -25,7 +25,7 @@ The tools that we can use to answer them are:
 * **SQL** - Using the BigQuery Browser
 * **Python** 
     * *siuba* - a convenient data analysis library in Python
-    * *calitp* - a personalized library incorporating calitp's unique needs
+    * *calitp* - a personalized package incorporating calitp's unique needs
     * *pandas* - a useful data analysis library, used sparsely in the examples below
 * **Metabase** - our business insights visualization tool
 
@@ -63,7 +63,10 @@ These tables compliment the fact tables by providing additional descriptive attr
 
 - **Agency**
     * **calitp_feed_name**  
-        * Our primary agency identifier - in most of the examples below, this is gathered from the table **views.gtfs_schedule_dim_feeds**
+        * (**Calitp Feed Name** in Metabase)
+        * Our primary agency identifier
+        * In most of the examples below, this is gathered from the table: views.**gtfs_schedule_dim_feeds**
+            * (**Gtfs Schedule Dim Feeds** in Metabase)
 - **Time**
 - **Geography**
 
