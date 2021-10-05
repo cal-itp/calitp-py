@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 
 from functools import singledispatch
@@ -47,11 +48,14 @@ def visit_insert_from_select(element, compiler, **kw):
 def get_engine(max_bytes=None):
     max_bytes = CALITP_BQ_MAX_BYTES if max_bytes is None else max_bytes
 
+    cred_path = os.environ.get("CALITP_SERVICE_KEY_PATH")
+
     # Note that we should be able to add location as a uri parameter, but
     # it is not being picked up, so passing as a separate argument for now.
     return create_engine(
         f"bigquery://{get_project_id()}/?maximum_bytes_billed={max_bytes}",
         location=CALITP_BQ_LOCATION,
+        credentials_path=cred_path,
     )
 
 
