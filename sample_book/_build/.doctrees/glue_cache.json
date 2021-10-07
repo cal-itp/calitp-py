@@ -1,0 +1,16 @@
+{
+  "docs/datasets/gtfs_schedule": {
+    "cool_text": {
+      "data": {
+        "text/plain": "'Yeehaw'"
+      },
+      "metadata": {
+        "scrapbook": {
+          "mime_prefix": "",
+          "name": "cool_text"
+        }
+      },
+      "output_type": "display_data"
+    }
+  }
+}

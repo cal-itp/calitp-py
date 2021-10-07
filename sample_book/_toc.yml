@@ -1,0 +1,6 @@
+format: jb-article
+root: docs/index
+sections:
+- file: docs/datasets/overview
+- file: docs/datasets/gtfs_schedule
+- file: docs/kubernetes/overview

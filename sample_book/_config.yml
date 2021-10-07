@@ -1,0 +1,26 @@
+title : CalITP Sample Book
+author: Natalya Diaz
+logo: 'qe-logo-large.png'
+
+# Short description about the book
+description: >-
+  A brief introduction to Python programming for scientific applications.
+
+execute:
+  execute_notebooks           : cache
+
+# HTML-specific settings
+html:
+  home_page_in_navbar         : false
+
+# Interact link settings
+notebook_interface            : "notebook"
+
+# Launch button settings
+repository:
+  url                         : https://github.com/executablebooks/quantecon-mini-example
+  path_to_book                : "mini_book"
+
+binder:
+  binderhub_url               : "https://mybinder.org"
+  text                        : "Launch binder"
