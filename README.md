@@ -10,6 +10,20 @@ pip install git+https://github.com/machow/siuba.git@stable
 
 # Install calitp package
 pip install calitp
+
+# Import and use cell magics
+# depending on the calitp version, might need to pip uninstall calitp first 
+pip install git+https://github.com/cal-itp/calitp-py@ipython-cell-magic
+
+# To build within jupiterbooks documentation
+jb build docs --all
+
+# To use sql code magic within a codeblock in jupiterbooks
+```{code-cell}
+%%sql
+SQL CODE
+```
+
 ```
 
 ## Configure
