@@ -22,7 +22,6 @@ jb build docs --all
   %%sql
   SQL CODE
   ```
-```
 
 ```
 ## Configure
