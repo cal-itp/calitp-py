@@ -17,12 +17,12 @@ pip install git+https://github.com/cal-itp/calitp-py@ipython-cell-magic
 
 # To build within jupiterbooks documentation
 jb build docs --all
-
+```
 # To use sql code magic within a codeblock in jupiterbooks
   ```{code-cell}
   %%sql
   SQL CODE
-
+  ```
 ```
 
 ```
