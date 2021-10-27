@@ -22,7 +22,7 @@ jb build docs --all
   ```{code-cell}
   %%sql
   SQL CODE
-  ```
+
 ```
 
 ```
