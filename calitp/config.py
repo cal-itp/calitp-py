@@ -6,8 +6,8 @@ from pathlib import Path
 from functools import wraps
 
 
-CALITP_BQ_MAX_BYTES = os.environ.get("CALITP_BQ_MAX_BYTES", 5_000_000_000)
-CALITP_BQ_LOCATION = os.environ.get("CALITP_BQ_LOCATION", "us-west2")
+CALITP_BQ_MAX_BYTES_DEFAULT = 5_000_000_000
+CALITP_BQ_LOCATION_DEFAULT = "us-west2"
 
 
 class RequiresAdminWarning(UserWarning):

@@ -7,8 +7,8 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy import create_engine, Table, MetaData, sql
 
 from .config import (
-    CALITP_BQ_MAX_BYTES,
-    CALITP_BQ_LOCATION,
+    CALITP_BQ_MAX_BYTES_DEFAULT,
+    CALITP_BQ_LOCATION_DEFAULT,
     format_table_name,
     get_project_id,
     require_pipeline,
@@ -46,7 +46,8 @@ def visit_insert_from_select(element, compiler, **kw):
 
 
 def get_engine(max_bytes=None):
-    max_bytes = CALITP_BQ_MAX_BYTES if max_bytes is None else max_bytes
+    if max_bytes is None:
+        max_bytes = os.environ.get("CALITP_BQ_MAX_BYTES", CALITP_BQ_MAX_BYTES_DEFAULT)
 
     cred_path = os.environ.get("CALITP_SERVICE_KEY_PATH")
 
@@ -54,7 +55,7 @@ def get_engine(max_bytes=None):
     # it is not being picked up, so passing as a separate argument for now.
     return create_engine(
         f"bigquery://{get_project_id()}/?maximum_bytes_billed={max_bytes}",
-        location=CALITP_BQ_LOCATION,
+        location=CALITP_BQ_LOCATION_DEFAULT,
         credentials_path=cred_path,
     )
 
@@ -177,7 +178,7 @@ def sql_patch_comments(table_name, field_comments, bq_client=None):
         from google.cloud import bigquery
 
         bq_client = bigquery.Client(
-            project=get_project_id(), location=CALITP_BQ_LOCATION
+            project=get_project_id(), location=CALITP_BQ_LOCATION_DEFAULT
         )
 
     tbl = bq_client.get_table(table_name)

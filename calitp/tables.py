@@ -77,6 +77,10 @@ class AutoTable:
     def _load_table(self, table_name):
         return LazyTbl(self._engine, table_name)
 
+    def set_max_bytes(self, max_bytes):
+        self._engine = get_engine(max_bytes)
+        self._init()
+
 
 tbl = AutoTable(
     get_engine(),
