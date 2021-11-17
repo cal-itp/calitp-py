@@ -69,13 +69,38 @@ class AutoTable:
             self._accessors[schema][table] = self._table_factory(v)
 
     def _table_factory(self, table_name):
+        PrintTable(self, table_name)
         def loader():
             return self._load_table(table_name)
 
         return loader
 
     def _load_table(self, table_name):
+       
         return LazyTbl(self._engine, table_name)
+
+class PrintTable:
+    def __init__(self,  table_name):
+        self.table_name = table_name
+        for i in tbl.tbl.columns.values():
+            self.col_names = i.name
+            print(self.col_names)
+
+    def _repr_html_(self):
+        return f"""
+            <h3> {self.table_name} </h3>
+            <table>
+                <tr>
+                    <th>name</th>
+                    <th>description</th>
+                </tr>
+                <tr>
+                     <td>{self.col_names}</td>
+                    #not ideal
+                    <td>{tbl.tbl.columns.values()[0:1]}</td>
+                </tr>
+            </table>
+            """
 
 
 tbl = AutoTable(
