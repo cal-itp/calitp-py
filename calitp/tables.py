@@ -105,6 +105,7 @@ class CalitpTable:
         
         return f"""
             <h3> {tbl.tbl.name} </h3>
+            <p> {tbl.tbl.comment} </p>
             <table>
                 <tr>
                     <th>name</th>
