@@ -31,3 +31,13 @@ pip install calitp
 | `is_development()` | `AIRFLOW_ENV` | E.g. changes project_id between staging and production. |
 | `is_pipeline()` | `CALITP_USER` | Enables writing to warehouse. E.g. functions like `write_table()`. |
 | `is_cloud()` | `CALITP_AUTH` | Toggles GCSFS authentication to "cloud" (vs "google_default"). |
+
+## Release
+
+This package is automatically pushed to pypi upon release.
+
+Releasing should follow this pattern:
+
+* bump version number in `calitp/__init__.py`.
+* create a pre-release, and verify the test release action worked.
+* edit release, and uncheck the pre-release box.
