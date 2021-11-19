@@ -46,7 +46,7 @@ jobs:
 
       - name: "TEST Upload to PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
-        if: github.event.action == 'prereleased'
+        if: github.event.release.prerelease
         with:
           user: __token__
           password: ${{ secrets.PYPI_TEST_API_TOKEN }}
@@ -54,7 +54,7 @@ jobs:
 
       - name: "Upload to PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
-        if: github.event.action == 'published'
+        if: !github.event.release.prerelease
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
