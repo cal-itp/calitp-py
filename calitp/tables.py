@@ -69,36 +69,49 @@ class AutoTable:
             self._accessors[schema][table] = self._table_factory(v)
 
     def _table_factory(self, table_name):
-        PrintTable(self, table_name)
-        def loader():
-            return self._load_table(table_name)
+        return CalitpTable(self._engine, table_name)
 
-        return loader
+    
 
-    def _load_table(self, table_name):
-       
-        return LazyTbl(self._engine, table_name)
-
-class PrintTable:
-    def __init__(self,  table_name):
+class CalitpTable:
+    
+    def __init__(self, engine, table_name):
+        self.engine = engine
         self.table_name = table_name
-        for i in tbl.tbl.columns.values():
-            self.col_names = i.name
-            print(self.col_names)
+
+
+    def __call__(self):
+        return self._create_table()
+    
+    
+    def _create_table(self):
+        return LazyTbl(self.engine, self.table_name)
+    
+    
+    def _row_html(self, col):
+        """Return formatted HTML for a single row of the doc table.
+        
+        Result will be for a column and its description.
+        """
+        
+        return f"<tr><td>{col.name}</td><td>{col.type}</td><td>{col.comment}</td></tr>"
+        
 
     def _repr_html_(self):
+        tbl = self._create_table()
+        
+        row_html = [self._row_html(col) for col in tbl.tbl.columns]
+        table_body_html = "\n".join(row_html)
+        
         return f"""
-            <h3> {self.table_name} </h3>
+            <h3> {tbl.tbl.name} </h3>
             <table>
                 <tr>
                     <th>name</th>
+                    <th>type</th>                    
                     <th>description</th>
                 </tr>
-                <tr>
-                     <td>{self.col_names}</td>
-                    #not ideal
-                    <td>{tbl.tbl.columns.values()[0:1]}</td>
-                </tr>
+                {table_body_html}
             </table>
             """
 
