@@ -7,7 +7,9 @@ def get_fs(gcs_project="", **kwargs):
     if is_cloud():
         return gcsfs.GCSFileSystem(project=gcs_project, token="cloud", **kwargs)
     else:
-        return gcsfs.GCSFileSystem(project=gcs_project, token="google_default", **kwargs)
+        return gcsfs.GCSFileSystem(
+            project=gcs_project, token="google_default", **kwargs
+        )
 
 
 @require_pipeline("save_to_gcfs")
