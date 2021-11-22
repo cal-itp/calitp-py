@@ -15,11 +15,14 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
+      - name: Set up Pre-commit
+        uses: pre-commit/action@v2.0.0
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install .
+
       - uses: google-github-actions/setup-gcloud@master
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}

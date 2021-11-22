@@ -1,4 +1,4 @@
-from IPython.core.magic import (register_cell_magic)
+from IPython.core.magic import register_cell_magic
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 from IPython.display import Markdown, display
 from IPython import get_ipython
@@ -6,9 +6,16 @@ from calitp.sql import query_sql
 
 
 @magic_arguments()
-@argument('-m', '--markdown', action='store_true', help="Print the code to markdown, in addition to running")
-@argument('-o', '--output', type=str, help="A variable name to save the result as")
-@argument('-q', '--quiet', action='store_true', help="Whether to hide the result printout")
+@argument(
+    "-m",
+    "--markdown",
+    action="store_true",
+    help="Print the code to markdown, in addition to running",
+)
+@argument("-o", "--output", type=str, help="A variable name to save the result as")
+@argument(
+    "-q", "--quiet", action="store_true", help="Whether to hide the result printout"
+)
 @register_cell_magic
 def sql(line, cell):
     # %%sql -m
