@@ -170,7 +170,7 @@ def to_snakecase(df):
     ).rename(columns=lambda s: "_%s" % s if s[0].isdigit() else s)
 
 
-def sql_patch_comments(table_name, field_comments, bq_client=None):
+def sql_patch_comments(table_name, field_comments, table_comments=None, bq_client=None):
     """Patch an existing table with new column descriptions."""
 
     if bq_client is None:
@@ -197,4 +197,6 @@ def sql_patch_comments(table_name, field_comments, bq_client=None):
         new_schema.append(d_entry)
 
     tbl.schema = new_schema
-    bq_client.update_table(tbl, ["schema"])
+    tbl.description = table_comments if table_comments is not None else tbl.description
+
+    bq_client.update_table(tbl, ["schema", "description"])

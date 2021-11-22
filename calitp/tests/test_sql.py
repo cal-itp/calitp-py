@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 import uuid
 
-from calitp.sql import get_table, write_table, query_sql
+from calitp.sql import get_table, write_table, query_sql, get_engine, sql_patch_comments
 from calitp.config import RequiresAdminWarning, pipeline_context
 from calitp.tests.helpers import CI_SCHEMA_NAME
 
@@ -77,3 +77,19 @@ def test_query_sql_as_df():
     df = query_sql("SELECT 1 AS n")
     assert len(df) == 1
     assert "n" in df.columns
+
+
+def test_patch_table_comments(tmp_name):
+    from sqlalchemy import Table, MetaData
+
+    engine = get_engine()
+
+    df = pd.DataFrame({"x": [1, 2, 3]})
+    with pipeline_context():
+        write_table(df, tmp_name)
+
+    sql_patch_comments(tmp_name, {"x": "x column"}, "some table")
+
+    tbl_test = Table(tmp_name, MetaData(), autoload_with=engine)
+    tbl_test.comment == "some table"
+    tbl_test.c.x.comment == "x column"
