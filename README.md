@@ -60,3 +60,5 @@ The steps to update jupyterhub on the calitp cluster are as follows:
 * create a calitp release
 * check the corresponding action to ensure a new image was pushed
 * follow the instructions in the data-infra docs on [updating the jupyterhub deploy](https://docs.calitp.org/data-infra/kubernetes/JupyterHub.html#updating).
+
+Note that you can test image building by creating a branch with "docker" in the name.
