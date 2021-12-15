@@ -12,6 +12,15 @@ pip install git+https://github.com/machow/siuba.git@stable
 pip install calitp
 ```
 
+## Test
+
+Tests can be run using pytest:
+
+```
+pip install -r requirements.txt
+pytest
+```
+
 ## Configure
 
 `calitp` uses the following environment variables:
@@ -32,7 +41,7 @@ pip install calitp
 | `is_pipeline()` | `CALITP_USER` | Enables writing to warehouse. E.g. functions like `write_table()`. |
 | `is_cloud()` | `CALITP_AUTH` | Toggles GCSFS authentication to "cloud" (vs "google_default"). |
 
-## Release
+## Release to PyPI
 
 This package is automatically pushed to pypi upon release.
 
@@ -41,3 +50,13 @@ Releasing should follow this pattern:
 * bump version number in `calitp/__init__.py`.
 * create a pre-release, and verify the test release action worked.
 * edit release, and uncheck the pre-release box.
+
+## Release to Jupyterhub
+
+This repo also handles pushing up a new jupyterhub image for calitp. See [this workflow file](https://github.com/cal-itp/calitp-py/blob/main/.github/workflows/docker.yml), which pushes on release.
+
+The steps to update jupyterhub on the calitp cluster are as follows:
+
+* create a calitp release
+* check the corresponding action to ensure a new image was pushed
+* follow the instructions in the data-infra docs on [updating the jupyterhub deploy](https://docs.calitp.org/data-infra/kubernetes/JupyterHub.html#updating).
