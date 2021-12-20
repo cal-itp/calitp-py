@@ -66,6 +66,7 @@ jobs:
     name: Package docker image
     runs-on: ubuntu-18.04
     needs: ["checks", "release"]
+    if: "needs.release.result == 'success' || needs.release.result == 'skipped'"
     steps:
       #- uses: actions/checkout@v2
       - name: Login to GitHub Container Registry
