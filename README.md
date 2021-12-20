@@ -41,24 +41,43 @@ pytest
 | `is_pipeline()` | `CALITP_USER` | Enables writing to warehouse. E.g. functions like `write_table()`. |
 | `is_cloud()` | `CALITP_AUTH` | Toggles GCSFS authentication to "cloud" (vs "google_default"). |
 
-## Release to PyPI
+## Release Package to PyPI
 
 This package is automatically pushed to pypi upon release.
 
 Releasing should follow this pattern:
 
 * bump version number in `calitp/__init__.py`.
-* create a pre-release, and verify the test release action worked.
+* create a pre-release, and verify the test release action worked. The tag should be `v{VERSION}`, e.g. `v0.0.1`.
 * edit release, and uncheck the pre-release box.
 
-## Release to Jupyterhub
+## Develop an Image for Jupyterhub
 
-This repo also handles pushing up a new jupyterhub image for calitp. See [this workflow file](https://github.com/cal-itp/calitp-py/blob/main/.github/workflows/docker.yml), which pushes on release.
+In order to test new images for Jupyterhub
+
+* create a new branch starting with development (e.g. `development`, `development-hub`).
+* make changes to the Dockerfile as needed.
+* a new image will automatically be built as a [calitp-py image](https://github.com/cal-itp/calitp-py/pkgs/container/calitp-py), named `calitp-py:<branch_name>`.
+
+You can test an image locally by running the following:
+
+```
+# note change the left-hand 8888 to another port, if you are already using that one
+docker run -p 8888:8888 -it --rm ghcr.io/cal-itp/calitp-py:development
+```
+
+## Release Image to Jupyterhub
+
+This repo also handles pushing up a new jupyterhub image for calitp.
+See the "Package docker image" section of [this workflow file](https://github.com/cal-itp/calitp-py/blob/main/.github/workflows/ci.yml).
+
+The workflow publishes images to github container registry in two cases:
+
+* a release with a tag that starts with `hub`
+* a commit to any branch named development
 
 The steps to update jupyterhub on the calitp cluster are as follows:
 
-* create a calitp release
-* check the corresponding action to ensure a new image was pushed
+* create a calitp release, tagged as `hub-v<VERSION NUMBER>`, e.g. `hub-v1`
+* check the corresponding action to ensure a new image was pushed. The image should appear on the [packages page](https://github.com/orgs/cal-itp/packages?repo_name=calitp-py).
 * follow the instructions in the data-infra docs on [updating the jupyterhub deploy](https://docs.calitp.org/data-infra/kubernetes/JupyterHub.html#updating).
-
-Note that you can test image building by creating a branch with "docker" in the name.
