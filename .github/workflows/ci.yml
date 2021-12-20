@@ -79,7 +79,7 @@ jobs:
       # build release image ----
       - name: "Release: Build and push"
         uses: docker/build-push-action@v2
-        if: ${{ github.event_name == 'release' &&  startsWith('hub', github.event.release.tag_name) }}
+        if: ${{ github.event_name == 'release' &&  startsWith(github.event.release.tag_name, 'hub') }}
         with:
           push: true
           tags: ghcr.io/${{github.repository}}:${{ github.event.release.tag_name }}
@@ -87,7 +87,7 @@ jobs:
       # build any image pushed on a branch starting with development ----
       - name: "Development: Build and push"
         uses: docker/build-push-action@v2
-        if: ${{ github.event_name != 'release' && startsWith('development', github.ref_name) }}
+        if: ${{ github.event_name != 'release' && startsWith(github.ref_name, 'development') }}
         with:
           push: true
           tags: ghcr.io/${{github.repository}}:${{github.ref_name}}
