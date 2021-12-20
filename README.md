@@ -63,6 +63,7 @@ You can test an image locally by running the following:
 
 ```
 # note change the left-hand 8888 to another port, if you are already using that one
+# if you are testing a different branch image, change development to that branch
 docker run -p 8888:8888 -it --rm ghcr.io/cal-itp/calitp-py:development
 ```
 
