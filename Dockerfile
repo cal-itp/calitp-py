@@ -8,4 +8,5 @@ RUN pip install \
     intake==0.6.4 \
     intake-dcat==0.4.0 \
     intake-geopandas==0.3.0 \
-    intake-parquet==0.2.3
+    intake-parquet==0.2.3 \
+    ipyleaflet==0.15.0
