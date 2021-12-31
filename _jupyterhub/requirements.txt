@@ -1,0 +1,11 @@
+black==21.12b0
+calitp==0.0.10
+intake==0.6.4
+intake-dcat==0.4.0
+intake-geopandas==0.3.0
+intake-parquet==0.2.3
+ipyleaflet==0.15.0
+jupytext==1.13.5
+jupyterlab-code-formatter==1.4.10
+siuba==1.0.0a2
+voila==0.3.0

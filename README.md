@@ -59,12 +59,37 @@ In order to test new images for Jupyterhub
 * make changes to the Dockerfile as needed.
 * a new image will automatically be built as a [calitp-py image](https://github.com/cal-itp/calitp-py/pkgs/container/calitp-py), named `calitp-py:<branch_name>`.
 
+### Run an image on github container repository
+
 You can test an image locally by running the following:
 
 ```
 # note change the left-hand 8888 to another port, if you are already using that one
 # if you are testing a different branch image, change development to that branch
 docker run -p 8888:8888 -it --rm ghcr.io/cal-itp/calitp-py:development
+```
+
+Once this runs, you should be able to view it on `localhost:8888`.
+Note that it should print a link in the terminal with a special token you may need to enter.
+
+### Build and run an image using docker-compose
+
+In order to build and test changes locally, you can run the following.
+
+```
+docker-compose build
+docker-compose up
+```
+
+This will do two things to help with development:
+
+* mount your local directory as `/home/jovyan/app`.
+* mount your default gcloud credentials to the image.
+
+If you do not have credentials set, you can use this command:
+
+```
+gcloud auth application-default login
 ```
 
 ## Release Image to Jupyterhub
