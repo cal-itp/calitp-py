@@ -9,3 +9,4 @@ jupytext==1.13.5
 jupyterlab-code-formatter==1.4.10
 siuba==1.0.0a2
 voila==0.3.0
+plotnine
