@@ -5,6 +5,7 @@ services:
   jupyter:
     build: .
     ports:
-      - 8999:8888
+      - 8888:8888
     volumes:
       - .:/home/jovyan/app
+      - $HOME/.config/gcloud:/home/jovyan/.config/gcloud
