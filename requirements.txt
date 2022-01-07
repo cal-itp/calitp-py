@@ -35,7 +35,7 @@ jinja2==3.0.1
 matplotlib-inline==0.1.2
 multidict==5.1.0
 nodeenv==1.6.0
-numpy==1.20.3
+numpy==1.21.0
 oauthlib==3.1.1
 packaging==20.9
 pandas==1.1.4
