@@ -53,6 +53,8 @@ Releasing should follow this pattern:
 
 ## Develop an Image for Jupyterhub
 
+[This Loom video](https://www.loom.com/share/1d3b00afe6314fccac55c0ce9b22ec02) walks through the process of creating and deploying new JupyterHub images that is found below.
+
 In order to test new images for Jupyterhub
 
 * create a new branch starting with development (e.g. `development`, `development-hub`).
