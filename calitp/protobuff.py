@@ -6,11 +6,11 @@ import json
 import random
 
 
-def get_random_protobuff(glob, bucket='gtfs-data', date='', format="protobuff"):
-    date = date.strip('*') # ignore ending asterix
-    if len(date) < len('2022-01-01'):
+def get_random_protobuff(glob, bucket="gtfs-data", date="", format="protobuff"):
+    date = date.strip("*")  # ignore ending asterix
+    if len(date) < len("2022-01-01"):
         raise ValueError("You must at least specify YYYY-MM-DD in the date string.")
-    if len(date) > len('2022-01-01T00:00:'):
+    if len(date) > len("2022-01-01T00:00:"):
         # user is specifying full time stamp
         date = date + "*"
     else:
@@ -18,14 +18,14 @@ def get_random_protobuff(glob, bucket='gtfs-data', date='', format="protobuff"):
         # This way we are prefixing on everything up to the seconds
         today = datetime.date.today().replace(day=1)
         today = datetime.datetime.fromisoformat(today.isoformat()).isoformat()
-        default_date = str(today).rsplit(':', 1)[0] + "*"
-        date = date + default_date[len(date):]
+        default_date = str(today).rsplit(":", 1)[0] + "*"
+        date = date + default_date[len(date) :]
 
     # defines the proto schema I think
     feed = gtfs_realtime_pb2.FeedMessage()
     fs = get_fs()
     glob = glob + "*"
-    globs = fs.glob(f'gs://{bucket}/rt/{date}/{glob}')
+    globs = fs.glob(f"gs://{bucket}/rt/{date}/{glob}")
     blob = random.choice(globs[0])
 
     with fs.open(blob, "rb") as f:
@@ -33,6 +33,6 @@ def get_random_protobuff(glob, bucket='gtfs-data', date='', format="protobuff"):
         print(len(result))
         feed.ParseFromString(result)
 
-    if format == 'json':
+    if format == "json":
         return blob, json.dumps(json_format.MessageToDict(feed), indent=2)
     return blob, feed
