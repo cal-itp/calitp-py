@@ -3,6 +3,7 @@ import datetime
 from google.protobuf import json_format
 from google.transit import gtfs_realtime_pb2
 import json
+import random
 
 
 def get_random_protobuff(glob, bucket='gtfs-data', date='', format="protobuff"):
@@ -25,13 +26,13 @@ def get_random_protobuff(glob, bucket='gtfs-data', date='', format="protobuff"):
     fs = get_fs()
     glob = glob + "*"
     globs = fs.glob(f'gs://{bucket}/rt/{date}/{glob}')
-    glob = globs[0]
+    blob = random.choice(globs[0])
 
-    with fs.open(globs[0], "rb") as f:
+    with fs.open(blob, "rb") as f:
         result = f.read()
         print(len(result))
         feed.ParseFromString(result)
 
     if format == 'json':
-        return glob, json.dumps(json_format.MessageToDict(feed), indent=2)
-    return glob, feed
+        return blob, json.dumps(json_format.MessageToDict(feed), indent=2)
+    return blob, feed
