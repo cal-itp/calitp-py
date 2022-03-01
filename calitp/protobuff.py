@@ -26,7 +26,7 @@ def get_random_protobuff(glob, bucket="gtfs-data", date="", format="protobuff"):
     fs = get_fs()
     glob = glob + "*"
     globs = fs.glob(f"gs://{bucket}/rt/{date}/{glob}")
-    blob = random.choice(globs[0])
+    blob = random.choice(globs)
 
     with fs.open(blob, "rb") as f:
         result = f.read()
