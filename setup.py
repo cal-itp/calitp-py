@@ -21,6 +21,7 @@ setup(
         "pandas-gbq",
         "pybigquery",
         "google-cloud-bigquery",
+        "gtfs-realtime-bindings",
     ],
     description="",
     author="",
