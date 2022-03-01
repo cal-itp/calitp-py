@@ -25,12 +25,14 @@ def get_random_protobuff(glob, bucket="gtfs-data", date="", format="protobuff"):
     feed = gtfs_realtime_pb2.FeedMessage()
     fs = get_fs()
     glob = glob + "*"
-    globs = fs.glob(f"gs://{bucket}/rt/{date}/{glob}")
-    blob = random.choice(globs)
+    glob = f"gs://{bucket}/rt/{date}/{glob}"
+    blobs = fs.glob(glob)
+    if len(blobs) == 0:
+        raise Exception(f"No files were found matching glob {glob}")
+    blob = random.choice(blobs)
 
     with fs.open(blob, "rb") as f:
         result = f.read()
-        print(len(result))
         feed.ParseFromString(result)
 
     if format == "json":
