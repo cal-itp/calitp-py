@@ -35,6 +35,10 @@ def get_random_protobuff(glob, bucket="gtfs-data", date="", format="protobuff"):
         result = f.read()
         feed.ParseFromString(result)
 
+    if not str(feed):
+        error = "ERROR: File could not be parsed as a protobuff."
+        error += " Displaying raw file instead."
+        return blob, result.decode(encoding="utf-8"), error
     if format == "json":
-        return blob, json.dumps(json_format.MessageToDict(feed), indent=2)
-    return blob, feed
+        feed = json.dumps(json_format.MessageToDict(feed), indent=2)
+    return blob, feed, None
