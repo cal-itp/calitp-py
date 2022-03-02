@@ -24,6 +24,7 @@ google-crc32c==1.1.2
 google-resumable-media==1.3.0
 googleapis-common-protos==1.53.0
 grpcio==1.38.0
+gtfs-realtime-bindings==0.0.7
 identify==2.2.10
 idna==2.10
 iniconfig==1.1.1
@@ -68,6 +69,7 @@ six==1.16.0
 SQLAlchemy==1.3.24
 toml==0.10.2
 traitlets==5.0.5
+typer==0.4.0
 typing-extensions==3.10.0.0
 ujson==4.0.2
 urllib3==1.26.5
