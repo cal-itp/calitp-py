@@ -137,4 +137,7 @@ python -m calitp random-protobuff 295/0/* --date 2022-02-23T16:01
 
 # print the result as a json
 python -m calitp random-protobuff 295/0/* --format json
+
+# access the test bucket (bucket defaults to gtfs-data)
+python -m calitp random-protobuff 295/0/* --bucket gtfs-data-test
 ```
