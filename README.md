@@ -109,3 +109,32 @@ The steps to update jupyterhub on the calitp cluster are as follows:
 * create a calitp release, tagged as `hub-v<VERSION NUMBER>`, e.g. `hub-v1`
 * check the corresponding action to ensure a new image was pushed. The image should appear on the [packages page](https://github.com/orgs/cal-itp/packages?repo_name=calitp-py).
 * follow the instructions in the data-infra docs on [updating the jupyterhub deploy](https://docs.calitp.org/data-infra/kubernetes/JupyterHub.html#updating).
+
+
+## CLI tools
+
+### random-protobuff
+
+This offers a quick way to pull a protobuff file from the [gtfs-realtime archiver](https://docs.calitp.org/data-infra/datasets_and_tables/gtfs_rt.html). Because Google Cloud Storage must be searched by prefix, an incomplete time string will default to first matching hour or minute. Here are some examples of potential searches.
+
+``` bash
+# Get the file for this feed at midnight this morning
+python -m calitp random-protobuff 295/0/gtfs_rt_service_alerts_url
+
+# A wildcard can be anywhere in the feed string
+python -m calitp random-protobuff 295/0/*
+
+# This defaults to midnight on the date provided
+python -m calitp random-protobuff 295/0/* --date 2022-02-23
+
+# Search at an exact time
+python -m calitp random-protobuff 295/0/* --date 2022-02-23T16:01:24
+
+
+# Or at a given hour/minute
+python -m calitp random-protobuff 295/0/* --date 2022-02-23T16
+python -m calitp random-protobuff 295/0/* --date 2022-02-23T16:01
+
+# print the result as a json
+python -m calitp random-protobuff 295/0/* --format json
+```
