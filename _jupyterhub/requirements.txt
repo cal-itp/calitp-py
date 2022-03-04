@@ -1,5 +1,5 @@
 black==21.12b0
-calitp==0.0.10
+calitp==0.0.12
 intake==0.6.4
 intake-dcat==0.4.0
 intake-geopandas==0.3.0
