@@ -12,4 +12,3 @@ RUN mkdir /opt/conda/share/jupyter/lab/settings/
 COPY _jupyterhub/overrides.json /opt/conda/share/jupyter/lab/settings/overrides.json
 
 COPY _jupyterhub/custom.sh /tmp/custom.sh
-RUN cat /tmp/custom.sh >> /home/jovyan/.bashrc
