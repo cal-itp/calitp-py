@@ -7,3 +7,6 @@ RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cl
 ADD _jupyterhub/requirements.txt /app/requirements.txt
 
 RUN pip install -r /app/requirements.txt
+
+COPY _jupyterhub/custom.sh /tmp/custom.sh
+RUN cat /tmp/custom.sh >> /home/jovyan/.bashrc
