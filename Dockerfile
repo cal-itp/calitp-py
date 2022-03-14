@@ -1,5 +1,10 @@
 FROM jupyter/datascience-notebook
 
+USER root
+RUN apt update \
+    && apt install keychain
+USER $NB_UID
+
 RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-361.0.0-linux-x86_64.tar.gz \
     && tar -zxvf google-cloud-sdk-361.0.0-linux-x86_64.tar.gz \
     && ./google-cloud-sdk/install.sh
