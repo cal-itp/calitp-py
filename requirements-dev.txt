@@ -22,7 +22,7 @@ gcsfs==0.8.0
 google-api-core==2.7.1
 google-auth==1.31.0
 google-auth-oauthlib==0.4.4
-google-cloud-bigquery==3.0.1
+google-cloud-bigquery==2.25.2
 google-cloud-bigquery-storage==2.8.0
 google-cloud-core==2.2.3
 google-crc32c==1.1.2
