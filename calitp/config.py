@@ -96,9 +96,7 @@ def format_table_name(name, is_staging=False, full_name=False):
 
 
 def pipe_file_name(path):
-    """Returns absolute path for a file in the pipeline (e.g. the data folder).
-
-    """
+    """Returns absolute path for a file in the pipeline (e.g. the data folder)."""
 
     # For now, we just get the path relative to the directory holding the
     # DAGs folder. For some reason, gcp doesn't expose the same variable
