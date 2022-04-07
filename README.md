@@ -48,8 +48,9 @@ This package is automatically pushed to pypi upon release.
 Releasing should follow this pattern:
 
 * bump version number in `calitp/__init__.py`.
-* create a pre-release, and verify the test release action worked. The tag should be `v{VERSION}`, e.g. `v0.0.1`.
-* edit release, and uncheck the pre-release box.
+* create a pre-release by selecting the `pre-release` button at the bottom of the page. the tag should be `v{VERSION}pre`, e.g. `v0.0.1pre`. Verify the test release action worked, and that the pre-release was published to test.pypi.org
+* if the pre-release was successful, create a release, and verify the release action worked. The tag should be `v{VERSION}`, e.g. `v0.0.1`.
+
 
 ## Develop an Image for Jupyterhub
 
