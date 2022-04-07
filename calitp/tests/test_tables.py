@@ -58,7 +58,11 @@ def test_write_table(tmp_name):
     with as_pipeline():
         write_table(df, tmp_name)
 
-    tbl = AutoTable(get_engine(), lambda s: s, lambda s: True,)  # s.replace(".", "_"),
+    tbl = AutoTable(
+        get_engine(),
+        lambda s: s,
+        lambda s: True,
+    )  # s.replace(".", "_"),
 
     tbl._init()
 

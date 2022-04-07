@@ -7,13 +7,28 @@ app = typer.Typer()
 
 @app.command()
 def random_protobuff(
-    glob=typer.Argument("*", help="A glob matching itp_id/url_number/string.",),
-    bucket=typer.Option("gtfs-data", help="GCS bucket to search.",),
-    date=typer.Option(f"{datetime.date.today()}*", help="Date glob.",),
-    format=typer.Option("protobuff", help="format to output, json or protobuff.",),
+    glob=typer.Argument(
+        "*",
+        help="A glob matching itp_id/url_number/string.",
+    ),
+    bucket=typer.Option(
+        "gtfs-data",
+        help="GCS bucket to search.",
+    ),
+    date=typer.Option(
+        f"{datetime.date.today()}*",
+        help="Date glob.",
+    ),
+    format=typer.Option(
+        "protobuff",
+        help="format to output, json or protobuff.",
+    ),
 ):
     blob, data, error = get_random_protobuff(
-        glob, bucket=bucket, date=date, format=format,
+        glob,
+        bucket=bucket,
+        date=date,
+        format=format,
     )
     data = str(data)
     print(f"downloaded {blob}")

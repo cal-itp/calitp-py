@@ -19,7 +19,7 @@ setup(
         "gcsfs",
         "pandas",
         "pandas-gbq",
-        "pybigquery",
+        "sqlalchemy-bigquery",
         "google-cloud-bigquery",
         "gtfs-realtime-bindings",
     ],
