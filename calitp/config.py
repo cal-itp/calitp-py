@@ -20,9 +20,7 @@ def is_development():
     # if a person can write data, then they need to set AIRFLOW_ENV
     if is_pipeline():
         if "AIRFLOW_ENV" not in os.environ:
-            raise KeyError(
-                "Pipeline admin must set AIRFLOW_ENV env variable explicitly"
-            )
+            raise KeyError("Pipeline admin must set AIRFLOW_ENV env variable explicitly")
 
         env = os.environ["AIRFLOW_ENV"]
 
