@@ -1,8 +1,6 @@
-FROM python:3.7-buster
+FROM jupyter/datascience-notebook
 
 LABEL org.opencontainers.image.source https://github.com/cal-itp/calitp-py
-
-FROM jupyter/datascience-notebook
 
 USER root
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
