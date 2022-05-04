@@ -6,8 +6,7 @@ USER root
 RUN curl -sL https://deb.nodesource.com/setup_14.x | bash -
 RUN apt update \
     && apt install keychain \
-    && apt-get update \
-    && apt-get install -y nodejs
+    && apt install -y nodejs
 USER $NB_UID
 
 RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-361.0.0-linux-x86_64.tar.gz \
