@@ -8,26 +8,26 @@ on:
 
 jobs:
   lint:
-    name: "Run linters"
+    name: "lint"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: Run pre-commit
         uses: pre-commit/action@v2.0.0
 
   test:
-    name: "Run pytest"
+    name: "pytest"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: Install poetry
         uses: abatilo/actions-poetry@v2.0.0
       - uses: google-github-actions/setup-gcloud@v0
@@ -46,15 +46,14 @@ jobs:
       - test
     if: "github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')"
     steps:
-
       - uses: actions/checkout@v2
       - name: "Set up Python"
         uses: actions/setup-python@v2
         with:
-          python-version: '3.9'
+          python-version: '3.10'
       - name: "Build package"
         run: |
-          python setup.py build sdist
+          poetry build
 
       - name: "TEST Upload to PyPI"
         uses: JRubics/poetry-publish@v1.11
