@@ -68,34 +68,34 @@ jobs:
 #          user: __token__
 #          password: ${{ secrets.PYPI_API_TOKEN }}
 
-  build_push:
-    name: Package docker image
-    runs-on: ubuntu-18.04
-    needs:
-      - lint
-      - test
-      - release
-    if: "success('lint') && success('test') && !failure('release')"
-    steps:
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      # build release image ----
-      - name: "Release: Build and push"
-        uses: docker/build-push-action@v2
-        if: ${{ github.event_name == 'release' &&  startsWith(github.event.release.tag_name, 'hub') }}
-        with:
-          push: true
-          tags: ghcr.io/${{github.repository}}:${{ github.event.release.tag_name }}
-
-      # build any image pushed on a branch starting with development ----
-      - name: "Development: Build and push"
-        uses: docker/build-push-action@v2
-        if: ${{ github.event_name != 'release' && startsWith(github.ref_name, 'development') }}
-        with:
-          push: true
-          tags: ghcr.io/${{github.repository}}:${{github.ref_name}}
+#  build_push:
+#    name: Package docker image
+#    runs-on: ubuntu-18.04
+#    needs:
+#      - lint
+#      - test
+#      - release
+#    if: "success('lint') && success('test') && !failure('release')"
+#    steps:
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v1
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#
+#      # build release image ----
+#      - name: "Release: Build and push"
+#        uses: docker/build-push-action@v2
+#        if: ${{ github.event_name == 'release' &&  startsWith(github.event.release.tag_name, 'hub') }}
+#        with:
+#          push: true
+#          tags: ghcr.io/${{github.repository}}:${{ github.event.release.tag_name }}
+#
+#      # build any image pushed on a branch starting with development ----
+#      - name: "Development: Build and push"
+#        uses: docker/build-push-action@v2
+#        if: ${{ github.event_name != 'release' && startsWith(github.ref_name, 'development') }}
+#        with:
+#          push: true
+#          tags: ghcr.io/${{github.repository}}:${{github.ref_name}}
