@@ -4,8 +4,14 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from calitp.config import RequiresAdminWarning, pipeline_context
-from calitp.sql import get_engine, get_table, query_sql, sql_patch_comments, write_table
+from calitp_py.config import RequiresAdminWarning, pipeline_context
+from calitp_py.sql import (
+    get_engine,
+    get_table,
+    query_sql,
+    sql_patch_comments,
+    write_table,
+)
 
 from .helpers import CI_SCHEMA_NAME
 
@@ -61,7 +67,7 @@ def test_query_sql():
     import tempfile
     from pathlib import Path
 
-    from calitp.templates import user_defined_macros
+    from calitp_py.templates import user_defined_macros
 
     with tempfile.TemporaryDirectory() as dir_name:
         p_query = Path(dir_name) / "query.yml"
