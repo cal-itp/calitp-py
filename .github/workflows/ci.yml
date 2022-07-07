@@ -7,8 +7,8 @@ on:
       - published
 
 jobs:
-  checks:
-    name: "Run Tests"
+  lint:
+    name: "Run linters"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -16,8 +16,18 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: '3.9'
-      - name: Set up Pre-commit
+      - name: Run pre-commit
         uses: pre-commit/action@v2.0.0
+
+  test:
+    name: "Run pytest"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
       - name: Install poetry
         uses: abatilo/actions-poetry@v2.0.0
       - uses: google-github-actions/setup-gcloud@v0
@@ -31,7 +41,9 @@ jobs:
   release:
     name: "Release to PyPI"
     runs-on: ubuntu-latest
-    needs: checks
+    needs:
+      - lint
+      - test
     if: "github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')"
     steps:
 
@@ -62,10 +74,12 @@ jobs:
   build_push:
     name: Package docker image
     runs-on: ubuntu-18.04
-    needs: ["checks", "release"]
-    if: "success('checks') && !failure('release')"
+    needs:
+      - lint
+      - test
+      - release
+    if: "success('lint') && success('test') && !failure('release')"
     steps:
-      #- uses: actions/checkout@v2
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v1
         with:
