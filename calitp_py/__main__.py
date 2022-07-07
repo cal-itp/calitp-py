@@ -1,7 +1,6 @@
 import datetime
 
 import typer
-
 from calitp.protobuff import get_random_protobuff
 
 app = typer.Typer()

@@ -18,19 +18,15 @@ jobs:
           python-version: '3.9'
       - name: Set up Pre-commit
         uses: pre-commit/action@v2.0.0
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          python -m pip install .
-
+      - name: Install poetry
+        uses: abatilo/actions-poetry@v2.0.0
       - uses: google-github-actions/setup-gcloud@v0
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
       - name: Run tests
         run: |
-          pytest
+          poetry run pytest
 
   release:
     name: "Release to PyPI"
@@ -49,12 +45,12 @@ jobs:
           python setup.py build sdist
 
       - name: "TEST Upload to PyPI"
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: JRubics/poetry-publish@v1.11
         if: github.event.release.prerelease
         with:
-          user: __token__
-          password: ${{ secrets.PYPI_TEST_API_TOKEN }}
           repository_url: https://test.pypi.org/legacy/
+          repository_username: __token__
+          repository_password: ${{ secrets.PYPI_TEST_API_TOKEN }}
 
       - name: "Upload to PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
