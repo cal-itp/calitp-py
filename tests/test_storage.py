@@ -1,5 +1,6 @@
-import pytest
 import uuid
+
+import pytest
 
 from calitp.config import get_bucket
 from calitp.storage import get_fs

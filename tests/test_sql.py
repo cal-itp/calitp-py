@@ -1,12 +1,14 @@
-import pandas as pd
-import pytest
 import uuid
 
-from calitp.sql import get_table, write_table, query_sql, get_engine, sql_patch_comments
-from calitp.config import RequiresAdminWarning, pipeline_context
-from calitp.tests.helpers import CI_SCHEMA_NAME
-
+import pandas as pd
+import pytest
 from pandas.testing import assert_frame_equal
+
+from calitp.config import RequiresAdminWarning, pipeline_context
+from calitp.sql import (get_engine, get_table, query_sql, sql_patch_comments,
+                        write_table)
+
+from .helpers import CI_SCHEMA_NAME
 
 # TODO: set up a separate project for CI, so our CI doesn't have permission
 # to create / delete prod tables. Bigquery lets you set read access on individual
@@ -56,10 +58,10 @@ def test_get_table(tmp_name):
 
 
 def test_query_sql():
-    import tempfile
     import datetime
-
+    import tempfile
     from pathlib import Path
+
     from calitp.templates import user_defined_macros
 
     with tempfile.TemporaryDirectory() as dir_name:
@@ -80,7 +82,7 @@ def test_query_sql_as_df():
 
 
 def test_patch_table_comments(tmp_name):
-    from sqlalchemy import Table, MetaData
+    from sqlalchemy import MetaData, Table
 
     engine = get_engine()
 

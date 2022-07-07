@@ -1,2 +1,28 @@
+[tool.poetry]
+name = "calitp-py"
+version = "0.0.17"
+description = "Shared code for the Cal-ITP data codebases"
+authors = ["Andrew Vaccaro <atvaccaro@gmail.com>"]
+license = "GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007"
+
+[tool.poetry.dependencies]
+python = "~3.10"
+gcsfs = "^2022.5.0"
+pandas = "^1.4.3"
+pandas-gbq = "^0.17.6"
+sqlalchemy-bigquery = "^1.4.4"
+google-cloud-bigquery = "^3.2.0"
+gtfs-realtime-bindings = "^0.0.7"
+siuba = "^0.3.0"
+Jinja2 = "^3.1.2"
+
+[tool.poetry.dev-dependencies]
+black = "^22.6.0"
+pytest = "^7.1.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
 [tool.black]
 line-length = 120
