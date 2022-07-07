@@ -3,7 +3,7 @@ repos:
     rev: v2.4.0
     hooks:
       - id: flake8
-        args: ["--ignore=E501,W503"] # line too long and line before binary operator (black is ok with these)
+        args: ["--ignore=E203,E501,W503"] # rely on black for these
         types:
           - python
       - id: trailing-whitespace
@@ -25,4 +25,4 @@ repos:
     rev: 5.10.1
     hooks:
       - id: isort
-        name: isort (python)
+        args: ["--profile", "black", "--filter-files"]

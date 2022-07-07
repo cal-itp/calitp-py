@@ -5,8 +5,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 
 from calitp.config import RequiresAdminWarning, pipeline_context
-from calitp.sql import (get_engine, get_table, query_sql, sql_patch_comments,
-                        write_table)
+from calitp.sql import get_engine, get_table, query_sql, sql_patch_comments, write_table
 
 from .helpers import CI_SCHEMA_NAME
 

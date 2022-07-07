@@ -1,10 +1,8 @@
 import os
 import warnings
-
 from contextlib import contextmanager
-from pathlib import Path
 from functools import wraps
-
+from pathlib import Path
 
 CALITP_BQ_MAX_BYTES = os.environ.get("CALITP_BQ_MAX_BYTES", 5_000_000_000)
 CALITP_BQ_LOCATION = os.environ.get("CALITP_BQ_LOCATION", "us-west2")

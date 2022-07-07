@@ -1,6 +1,6 @@
 import gcsfs
 
-from .config import is_cloud, get_bucket, require_pipeline
+from .config import get_bucket, is_cloud, require_pipeline
 
 
 def get_fs(gcs_project="", **kwargs):
