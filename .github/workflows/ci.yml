@@ -34,10 +34,10 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
       - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: poetry install
       - name: Run tests
-        run: |
-          poetry install
-          poetry run pytest
+        run: poetry run pytest
 
   release:
     name: "Release to PyPI"
