@@ -39,34 +39,34 @@ jobs:
       - name: Run tests
         run: poetry run pytest
 
-  test_release:
-    name: "Release to TEST PyPI"
+  pypi:
+    name: "Release to PyPI"
     runs-on: ubuntu-latest
     needs:
       - lint
       - test
-#    if: "github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')"
+    if: "github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')"
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
           python-version: '3.10'
-      - name: "TEST Upload to PyPI"
+      - name: "Upload to TEST PyPI"
         uses: JRubics/poetry-publish@v1.11
-#        if: github.event.release.prerelease
+        if: github.event.release.prerelease
         with:
           repository_name: testpypi
           repository_url: https://test.pypi.org/legacy/
           repository_username: __token__
           repository_password: ${{ secrets.PYPI_TEST_API_TOKEN }}
           build_format: "sdist"
-
-#      - name: "Upload to PyPI"
-#        uses: pypa/gh-action-pypi-publish@release/v1
-#        if: "!github.event.release.prerelease"
-#        with:
-#          user: __token__
-#          password: ${{ secrets.PYPI_API_TOKEN }}
+      - name: "Upload to PyPI"
+        uses: JRubics/poetry-publish@v1.11
+        if: "!github.event.release.prerelease"
+        with:
+          repository_username: __token__
+          repository_password: ${{ secrets.PYPI_API_TOKEN }}
+          build_format: "sdist"
 
 #  build_push:
 #    name: Package docker image
