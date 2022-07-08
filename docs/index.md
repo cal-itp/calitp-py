@@ -1,8 +1,8 @@
 # calitp
 
 ```python
-from calitp_py.tables import tbl
-from calitp_py.import query_sql
+from calitp.tables import tbl
+from calitp.import query_sql
 
 
 ```

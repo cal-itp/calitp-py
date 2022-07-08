@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 from siuba.sql import LazyTbl
 
-from calitp_py.sql import get_engine, get_table, write_table
-from calitp_py.tables import AutoTable
+from calitp.sql import get_engine, get_table, write_table
+from calitp.tables import AutoTable
 
 from .helpers import CI_SCHEMA_NAME
 
@@ -72,7 +72,7 @@ def test_write_table(tmp_name):
 
 
 def test_auto_table_comments(tmp_name):
-    from calitp_py.tables import TableFactory
+    from calitp.tables import TableFactory
 
     get_engine().execute(
         f"""

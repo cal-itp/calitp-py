@@ -1,10 +1,11 @@
 import json
 
-from calitp_py.sql import query_sql
 from IPython import get_ipython
 from IPython.core.magic import register_cell_magic
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 from IPython.display import Markdown, display
+
+from calitp.sql import query_sql
 
 
 @magic_arguments()

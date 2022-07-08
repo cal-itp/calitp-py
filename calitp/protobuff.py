@@ -2,9 +2,10 @@ import datetime
 import json
 import random
 
-from calitp_py.storage import get_fs
 from google.protobuf import json_format
 from google.transit import gtfs_realtime_pb2
+
+from calitp.storage import get_fs
 
 
 def get_random_protobuff(glob, bucket="gtfs-data", date="", format="protobuff"):
