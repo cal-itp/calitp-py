@@ -68,6 +68,7 @@ jobs:
           repository_password: ${{ secrets.PYPI_API_TOKEN }}
           build_format: "sdist"
 
+# This is disabled for now; I don't hate the image definition living here, but the CI/CD is overly complicated I think
 #  build_push:
 #    name: Package docker image
 #    runs-on: ubuntu-18.04

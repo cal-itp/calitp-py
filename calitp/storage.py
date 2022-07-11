@@ -128,7 +128,7 @@ def partition_map(path) -> Dict[str, PartitionType]:
 #     schedule = "schedule"
 #     rt = "rt"
 
-# TODO: consider moving this to calitp-py or some other more shared location
+
 class GTFSFeedType(str, Enum):
     schedule = "schedule"
     service_alerts = "service_alerts"
