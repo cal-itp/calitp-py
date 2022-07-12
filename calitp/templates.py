@@ -1,4 +1,4 @@
-from .config import get_project_id, get_bucket, format_table_name
+from .config import format_table_name, get_bucket, get_project_id
 
 user_defined_macros = dict(
     get_project_id=get_project_id,

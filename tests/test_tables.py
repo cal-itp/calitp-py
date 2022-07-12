@@ -1,13 +1,14 @@
-import pytest
 import uuid
-import pandas as pd
+from contextlib import contextmanager
 
-from calitp.sql import get_table, write_table, get_engine
-from calitp.tables import AutoTable
+import pandas as pd
+import pytest
 from siuba.sql import LazyTbl
 
-from contextlib import contextmanager
-from calitp.tests.helpers import CI_SCHEMA_NAME
+from calitp.sql import get_engine, get_table, write_table
+from calitp.tables import AutoTable
+
+from .helpers import CI_SCHEMA_NAME
 
 
 # TODO: copied from tests.sql, consolidate into helpers
@@ -33,7 +34,6 @@ def tmp_name():
     from sqlalchemy.exc import NoSuchTableError
 
     # Code that runs before test ----
-
     # generate a random table name. ensure it does not start with a number.
     table_name = "t_" + str(uuid.uuid4()).replace("-", "_")
     schema_table = f"{CI_SCHEMA_NAME}.{table_name}"

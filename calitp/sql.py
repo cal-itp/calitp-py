@@ -1,18 +1,21 @@
 import os
-import pandas as pd
-
 from functools import singledispatch
-from sqlalchemy.sql.expression import Executable, ClauseElement
+
+import pandas as pd
+import yaml
+from jinja2 import Environment
+from sqlalchemy import MetaData, Table, create_engine, sql
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy import create_engine, Table, MetaData, sql
+from sqlalchemy.sql.expression import ClauseElement, Executable
 
 from .config import (
-    CALITP_BQ_MAX_BYTES,
     CALITP_BQ_LOCATION,
+    CALITP_BQ_MAX_BYTES,
     format_table_name,
     get_project_id,
     require_pipeline,
 )
+from .templates import user_defined_filters, user_defined_macros
 
 
 class CreateTableAs(Executable, ClauseElement):
@@ -113,10 +116,6 @@ def _write_table_df(sql_stmt, table_name, engine=None, replace=True):
 
 
 def query_sql(fname, write_as=None, replace=False, dry_run=False, as_df=True):
-    import yaml
-    from jinja2 import Environment
-    from .templates import user_defined_filters, user_defined_macros
-
     if fname.endswith(".yml") or fname.endswith(".yaml"):
         config = yaml.safe_load(open(fname))
 

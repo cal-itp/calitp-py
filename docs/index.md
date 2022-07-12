@@ -2,7 +2,7 @@
 
 ```python
 from calitp.tables import tbl
-from calitp import query_sql
+from calitp.import query_sql
 
 
 ```

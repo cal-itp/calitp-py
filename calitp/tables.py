@@ -1,7 +1,7 @@
 from siuba.sql import LazyTbl
 
-from .sql import get_engine
 from .config import is_development
+from .sql import get_engine
 
 
 class AttributeDict:

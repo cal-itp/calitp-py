@@ -3,6 +3,7 @@ repos:
     rev: v2.4.0
     hooks:
       - id: flake8
+        args: ["--ignore=E203,E501,W503"] # rely on black for these
         types:
           - python
       - id: trailing-whitespace
@@ -20,3 +21,8 @@ repos:
       - id: bandit
         args: ["-ll", "--skip=B108,B608,B701"]
         files: .py$
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        args: ["--profile", "black", "--filter-files"]
