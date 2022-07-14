@@ -119,7 +119,7 @@ PARTITION_DESERIALIZERS = {
 
 
 def partition_map(path) -> Dict[str, PartitionType]:
-    return {key: value for key, value in re.findall(r"/(\w+)=([\w\-:=]+)(?=/)", path.lower())}
+    return {key: value for key, value in re.findall(r"/(\w+)=([\w\-:=+.]+)(?=/)", path)}
 
 
 # class GTFSFeedType(str, Enum):
@@ -470,3 +470,8 @@ class DownloadFeedsResult(PartitionedGCSArtifact):
     def save(self, fs):
         self._content = "\n".join(o.json() for o in self.outcomes).encode()
         self.save_content(fs=fs, exclude={"outcomes"})
+
+
+if __name__ == "__main__":
+    # just some useful testing stuff
+    AirtableGTFSDataExtract.get_latest()
