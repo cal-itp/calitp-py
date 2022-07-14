@@ -106,22 +106,20 @@ PartitionType = Union[str, int, pendulum.DateTime, pendulum.Date, pendulum.Time]
 PARTITION_SERIALIZERS = {
     str: str,
     int: str,
+    pendulum.Date: lambda d: d.to_date_string(),
     pendulum.DateTime: lambda dt: dt.to_iso8601_string(),
-    pendulum.Date: lambda d: d.strftime("%Y-%m-%d"),
-    pendulum.Time: lambda t: t.format("HH:mm:ss"),
 }
 
 PARTITION_DESERIALIZERS = {
     str: str,
     int: int,
-    pendulum.DateTime: lambda s: pendulum.parse(s, exact=True),
     pendulum.Date: lambda s: pendulum.parse(s, exact=True),
-    pendulum.Time: lambda s: pendulum.parse(s, exact=True),
+    pendulum.DateTime: lambda s: pendulum.parse(s, exact=True),
 }
 
 
 def partition_map(path) -> Dict[str, PartitionType]:
-    return {key: value for key, value in re.findall(r"/(\w+)=([\w\-:=]+)(?=/)", path.lower())}
+    return {key: value for key, value in re.findall(r"/(\w+)=([\w\-:=+.]+)(?=/)", path)}
 
 
 # class GTFSFeedType(str, Enum):
@@ -383,10 +381,13 @@ def get_latest_file(table_path: str, partitions: Dict[str, Type[PartitionType]])
 class AirtableGTFSDataExtract(PartitionedGCSArtifact):
     bucket: ClassVar[str] = prefix_bucket("gs://calitp-airtable")
     table: ClassVar[str] = "california_transit__gtfs_datasets"
-    partition_names: ClassVar[List[str]] = ["dt", "time"]
-    dt: pendulum.Date
-    time: pendulum.Time
+    partition_names: ClassVar[List[str]] = ["dt", "ts"]
+    ts: pendulum.DateTime
     records: List[AirtableGTFSDataRecord]
+
+    @property
+    def dt(self):
+        return self.ts.date()
 
     # TODO: this should probably be abstracted somewhere... it's useful in lots of places, probably
     @classmethod
@@ -400,15 +401,12 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
         logging.info(f"identified {latest.name} as the most recent extract of gtfs datasets")
 
         with get_fs().open(latest.name, "rb") as f:
-            content = gzip.decompress(f.read()).decode()
-
-        records = [AirtableGTFSDataRecord(**json.loads(row)) for row in content.splitlines()]
+            content = gzip.decompress(f.read())
 
         return AirtableGTFSDataExtract(
-            records=records,
             filename=latest.filename,
-            dt=pendulum.parse(latest.partition["dt"], exact=True),
-            time=pendulum.parse(latest.partition["time"], exact=True),
+            ts=pendulum.parse(latest.partition["ts"], exact=True),
+            records=[AirtableGTFSDataRecord(**json.loads(row)) for row in content.decode().splitlines()],
         )
 
 
@@ -416,11 +414,11 @@ class GTFSFeedExtractInfo(PartitionedGCSArtifact):
     # TODO: this should check whether the bucket exists https://stackoverflow.com/a/65628273
     # TODO: this should be named `gtfs-raw` _or_ we make it dynamic
     bucket: ClassVar[str] = prefix_bucket("gs://calitp-gtfs-schedule-raw")
-    partition_names: ClassVar[List[str]] = ["dt", "base64_url", "time"]
+    partition_names: ClassVar[List[str]] = ["dt", "base64_url", "ts"]
     config: AirtableGTFSDataRecord
     response_code: int
     response_headers: Optional[Dict[str, str]]
-    download_time: pendulum.DateTime
+    ts: pendulum.DateTime
 
     @property
     def table(self) -> GTFSFeedType:
@@ -428,15 +426,11 @@ class GTFSFeedExtractInfo(PartitionedGCSArtifact):
 
     @property
     def dt(self) -> pendulum.Date:
-        return self.download_time.date()
+        return self.ts.date()
 
     @property
     def base64_url(self) -> str:
         return self.config.base64_encoded_url
-
-    @property
-    def time(self) -> pendulum.Time:
-        return self.download_time.time()
 
 
 class AirtableGTFSDataRecordProcessingOutcome(ProcessingOutcome):
@@ -447,18 +441,14 @@ class AirtableGTFSDataRecordProcessingOutcome(ProcessingOutcome):
 class DownloadFeedsResult(PartitionedGCSArtifact):
     bucket: ClassVar[str] = prefix_bucket("gs://calitp-gtfs-schedule-raw")
     table: ClassVar[str] = "download_schedule_feed_results"
-    partition_names: ClassVar[List[str]] = ["dt", "time"]
-    start_time: pendulum.DateTime
-    end_time: pendulum.DateTime
+    partition_names: ClassVar[List[str]] = ["dt", "ts"]
+    ts: pendulum.DateTime
+    end: pendulum.DateTime
     outcomes: List[AirtableGTFSDataRecordProcessingOutcome]
 
     @property
     def dt(self) -> pendulum.Date:
-        return self.start_time.date()
-
-    @property
-    def time(self) -> pendulum.Time:
-        return self.start_time.time()
+        return self.ts.date()
 
     @property
     def successes(self) -> List[AirtableGTFSDataRecordProcessingOutcome]:
@@ -472,8 +462,9 @@ class DownloadFeedsResult(PartitionedGCSArtifact):
     #   I need to figure out the best way to have a single type represent the "metadata" of
     #   the content as well as the content itself
     def save(self, fs):
-        self.save_content(
-            fs=fs,
-            content="\n".join(o.json() for o in self.outcomes).encode(),
-            exclude={"outcomes"},
-        )
+        self.save_content(fs=fs, content="\n".join(o.json() for o in self.outcomes).encode(), exclude={"outcomes"})
+
+
+if __name__ == "__main__":
+    # just some useful testing stuff
+    AirtableGTFSDataExtract.get_latest().records
