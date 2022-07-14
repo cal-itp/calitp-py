@@ -198,7 +198,6 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
     """
 
     filename: str
-    _content: Optional[bytes]
 
     class Config:
         json_encoders = {
@@ -252,11 +251,9 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
             self.filename,
         )
 
-    def save_content(self, fs: gcsfs.GCSFileSystem, exclude=None):
-        if not self._content:
-            raise ValueError("must set _content before attempting to save")
-        logging.info(f"saving {humanize.naturalsize(len(self._content))} to {self.path}")
-        fs.pipe(path=self.path, value=self._content)
+    def save_content(self, fs: gcsfs.GCSFileSystem, content: bytes, exclude=None):
+        logging.info(f"saving {humanize.naturalsize(len(content))} to {self.path}")
+        fs.pipe(path=self.path, value=content)
         fs.setxattrs(
             path=self.path,
             # This syntax seems silly but it's so we pass the _value_ of PARTITIONED_ARTIFACT_METADATA_KEY
@@ -386,14 +383,11 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
     table: ClassVar[str] = "california_transit__gtfs_datasets"
     partition_names: ClassVar[List[str]] = ["dt", "ts"]
     ts: pendulum.DateTime
+    records: List[AirtableGTFSDataRecord]
 
     @property
     def dt(self):
         return self.ts.date()
-
-    @property
-    def records(self) -> List[AirtableGTFSDataRecord]:
-        return [AirtableGTFSDataRecord(**json.loads(row)) for row in self._content.decode().splitlines()]
 
     # TODO: this should probably be abstracted somewhere... it's useful in lots of places, probably
     @classmethod
@@ -410,9 +404,9 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
             content = gzip.decompress(f.read())
 
         return AirtableGTFSDataExtract(
-            _content=content,
             filename=latest.filename,
             ts=pendulum.parse(latest.partition["ts"], exact=True),
+            records=[AirtableGTFSDataRecord(**json.loads(row)) for row in content.decode().splitlines()],
         )
 
 
@@ -468,10 +462,9 @@ class DownloadFeedsResult(PartitionedGCSArtifact):
     #   I need to figure out the best way to have a single type represent the "metadata" of
     #   the content as well as the content itself
     def save(self, fs):
-        self._content = "\n".join(o.json() for o in self.outcomes).encode()
-        self.save_content(fs=fs, exclude={"outcomes"})
+        self.save_content(fs=fs, content="\n".join(o.json() for o in self.outcomes).encode(), exclude={"outcomes"})
 
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    AirtableGTFSDataExtract.get_latest()
+    AirtableGTFSDataExtract.get_latest().records
