@@ -1,5 +1,6 @@
 import abc
 import base64
+import cgi
 import gzip
 import json
 import logging
@@ -14,7 +15,7 @@ import pendulum
 from pydantic import BaseModel, Field, HttpUrl, validator
 from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
-from requests import Request
+from requests import Request, Session
 from typing_extensions import Annotated, Literal
 
 from .config import get_bucket, is_cloud, is_development, require_pipeline
@@ -434,6 +435,31 @@ class GTFSFeedExtractInfo(PartitionedGCSArtifact):
         return self.config.base64_encoded_url
 
 
+class GTFSRTFeedExtract(PartitionedGCSArtifact):
+    bucket: ClassVar[str] = prefix_bucket("gs://calitp-gtfs-rt-raw")
+    partition_names: ClassVar[List[str]] = ["dt", "time", "base64_url"]
+    config: AirtableGTFSDataRecord
+    response_code: int
+    response_headers: Optional[Dict[str, str]]
+    download_time: pendulum.DateTime
+
+    @property
+    def table(self) -> GTFSFeedType:
+        return self.config.data
+
+    @property
+    def dt(self) -> pendulum.Date:
+        return self.download_time.date()
+
+    @property
+    def time(self) -> pendulum.Time:
+        return self.download_time.time()
+
+    @property
+    def base64_url(self) -> str:
+        return self.config.base64_encoded_url
+
+
 class AirtableGTFSDataRecordProcessingOutcome(ProcessingOutcome):
     input_type: ClassVar[Type[PartitionedGCSArtifact]] = GTFSFeedExtractInfo
     extract: Optional[GTFSFeedExtractInfo]
@@ -464,6 +490,48 @@ class DownloadFeedsResult(PartitionedGCSArtifact):
     #   the content as well as the content itself
     def save(self, fs):
         self.save_content(fs=fs, content="\n".join(o.json() for o in self.outcomes).encode(), exclude={"outcomes"})
+
+
+def download_feed(
+    record: AirtableGTFSDataRecord,
+    auth_dict: Dict,
+    default_filename="feed",
+) -> (GTFSFeedExtractInfo, bytes):
+    if not record.uri:
+        raise ValueError("")
+
+    parse_obj_as(HttpUrl, record.uri)
+
+    s = Session()
+    r = s.prepare_request(record.build_request(auth_dict))
+    resp = s.send(r)
+    resp.raise_for_status()
+
+    disposition_header = resp.headers.get("content-disposition", resp.headers.get("Content-Disposition"))
+
+    if disposition_header:
+        if disposition_header.startswith("filename="):
+            # sorry; cgi won't parse unless it's prefixed with the disposition type
+            disposition_header = f"attachment; {disposition_header}"
+        _, params = cgi.parse_header(disposition_header)
+        disposition_filename = params.get("filename")
+    else:
+        disposition_filename = None
+
+    filename = (
+        disposition_filename or (os.path.basename(resp.url) if resp.url.endswith(".zip") else None) or default_filename
+    )
+
+    extract = GTFSFeedExtractInfo(
+        # TODO: handle this in pydantic?
+        filename=filename.strip('"'),
+        config=record,
+        response_code=resp.status_code,
+        response_headers=resp.headers,
+        download_time=pendulum.now(),
+    )
+
+    return extract, resp.content
 
 
 if __name__ == "__main__":
