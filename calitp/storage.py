@@ -386,7 +386,7 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
     records: List[AirtableGTFSDataRecord]
 
     @property
-    def dt(self):
+    def dt(self) -> pendulum.Date:
         return self.ts.date()
 
     # TODO: this should probably be abstracted somewhere... it's useful in lots of places, probably
@@ -395,6 +395,7 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
         # TODO: this concatenation should live on the abstract base class probably
         latest = get_latest_file(
             cls.bucket_table(),
+            # TODO: this doesn't pick up the type hint of dt since it's a property; it's fine as a string but we should fix
             partitions={name: get_type_hints(cls).get(name, str) for name in cls.partition_names},
         )
 
@@ -467,4 +468,4 @@ class DownloadFeedsResult(PartitionedGCSArtifact):
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    AirtableGTFSDataExtract.get_latest().records
+    print(len(AirtableGTFSDataExtract.get_latest().records))
