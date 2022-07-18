@@ -12,6 +12,7 @@ from typing import ClassVar, Dict, List, Optional, Type, Union, get_type_hints
 import gcsfs
 import humanize
 import pendulum
+from google.cloud import storage
 from pydantic import BaseModel, Field, HttpUrl, validator
 from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
@@ -240,6 +241,18 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
             raise ValueError(f"all partition names must exist as fields or properties; missing {missing}")
         return values
 
+    # TODO: these are repetitive
+    @property
+    def name(self):
+        return os.path.join(
+            self.table,
+            *[
+                f"{name}={PARTITION_SERIALIZERS[type(getattr(self, name))](getattr(self, name))}"
+                for name in self.partition_names
+            ],
+            self.filename,
+        )
+
     @property
     def path(self):
         return os.path.join(
@@ -252,14 +265,34 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
             self.filename,
         )
 
-    def save_content(self, fs: gcsfs.GCSFileSystem, content: bytes, exclude=None):
-        logging.info(f"saving {humanize.naturalsize(len(content))} to {self.path}")
-        fs.pipe(path=self.path, value=content)
-        fs.setxattrs(
-            path=self.path,
-            # This syntax seems silly but it's so we pass the _value_ of PARTITIONED_ARTIFACT_METADATA_KEY
-            **{PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)},
-        )
+    def save_content(self, content: bytes, exclude=None, fs: gcsfs.GCSFileSystem = None, client: storage.Client = None):
+        if (fs is None) == (client is None):
+            raise TypeError("must provide a gcsfs file system OR a storage client")
+
+        if fs:
+            logging.info(f"saving {humanize.naturalsize(len(content))} to {self.path}")
+            fs.pipe(path=self.path, value=content)
+            fs.setxattrs(
+                path=self.path,
+                # This syntax seems silly but it's so we pass the _value_ of PARTITIONED_ARTIFACT_METADATA_KEY
+                **{PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)},
+            )
+
+        if client:
+            logging.info(f"saving {humanize.naturalsize(len(content))} to {self.bucket} {self.name}")
+            blob = storage.Blob(
+                name=self.name,
+                bucket=client.bucket(self.bucket.replace("gs://", "")),
+            )
+
+            blob.upload_from_string(
+                data=content,
+                content_type="application/octet-stream",
+                client=client,
+            )
+
+            blob.metadata = {PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)}
+            blob.patch()
 
 
 def fetch_all_in_partition(
@@ -528,7 +561,7 @@ def download_feed(
         config=record,
         response_code=resp.status_code,
         response_headers=resp.headers,
-        download_time=pendulum.now(),
+        ts=pendulum.now(),
     )
 
     return extract, resp.content
