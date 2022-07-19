@@ -143,10 +143,20 @@ class AirtableGTFSDataRecord(BaseModel):
     data_quality_pipeline: Optional[bool]
     schedule_to_use_for_rt_validation: Optional[List[str]]
     auth_query_param: Dict[str, str] = {}
-    # TODO: add auth_headers when available in Airtable!
 
     class Config:
         extra = "allow"
+
+    # TODO: this is a bit hacky but we need this until we split off auth query params from the URI itself
+    @root_validator(pre=True, allow_reuse=True)
+    def parse_query_params(cls, values):
+        if values["uri"]:
+            jinja_pattern = r"(?P<param_name>\w+)={{\s*(?P<param_lookup_key>\w+)\s*}}"
+            match = re.search(jinja_pattern, values["uri"])
+            if match:
+                values["auth_query_param"] = {match.group("param_name"): match.group("param_lookup_key")}
+                values["uri"] = re.sub(jinja_pattern, "", values["uri"])
+        return values
 
     @validator("data", pre=True, allow_reuse=True)
     def convert_feed_type(cls, v):
@@ -165,8 +175,13 @@ class AirtableGTFSDataRecord(BaseModel):
         # TODO: implement me
         raise NotImplementedError
 
+    # TODO: this should actually rely on airtable data!
     @property
     def auth_header(self) -> Dict[str, str]:
+        if self.uri and "goswift.ly" in self.uri:
+            return {
+                "authorization": "SWIFTLY_AUTHORIZATION_KEY_CALITP",
+            }
         return {}
 
     @property
@@ -554,4 +569,6 @@ def download_feed(
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    print(len(AirtableGTFSDataExtract.get_latest().records))
+    for record in AirtableGTFSDataExtract.get_latest().records:
+        assert record.auth_query_param is not None
+        assert record.auth_header is not None
