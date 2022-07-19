@@ -13,7 +13,7 @@ import gcsfs
 import humanize
 import pendulum
 from google.cloud import storage
-from pydantic import BaseModel, Field, HttpUrl, validator
+from pydantic import BaseModel, Field, HttpUrl, constr, validator
 from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
 from requests import Request, Session
@@ -199,7 +199,7 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
     download of a given data source.
     """
 
-    filename: str
+    filename: constr(strip_whitespace=True)
 
     class Config:
         json_encoders = {
@@ -468,29 +468,13 @@ class GTFSFeedExtractInfo(PartitionedGCSArtifact):
         return self.config.base64_encoded_url
 
 
-class GTFSRTFeedExtract(PartitionedGCSArtifact):
+class GTFSRTFeedExtract(GTFSFeedExtractInfo):
     bucket: ClassVar[str] = prefix_bucket("gs://calitp-gtfs-rt-raw")
-    partition_names: ClassVar[List[str]] = ["dt", "time", "base64_url"]
-    config: AirtableGTFSDataRecord
-    response_code: int
-    response_headers: Optional[Dict[str, str]]
-    download_time: pendulum.DateTime
+    partition_names: ClassVar[List[str]] = ["dt", "hour", "base64_url", "ts"]
 
     @property
-    def table(self) -> GTFSFeedType:
-        return self.config.data
-
-    @property
-    def dt(self) -> pendulum.Date:
-        return self.download_time.date()
-
-    @property
-    def time(self) -> pendulum.Time:
-        return self.download_time.time()
-
-    @property
-    def base64_url(self) -> str:
-        return self.config.base64_encoded_url
+    def hour(self) -> pendulum.DateTime:
+        return self.ts.replace(minute=0, second=0, microsecond=0)
 
 
 class AirtableGTFSDataRecordProcessingOutcome(ProcessingOutcome):
@@ -529,7 +513,7 @@ def download_feed(
     record: AirtableGTFSDataRecord,
     auth_dict: Dict,
     default_filename="feed",
-) -> (GTFSFeedExtractInfo, bytes):
+) -> (Union[GTFSFeedExtractInfo, GTFSRTFeedExtract], bytes):
     if not record.uri:
         raise ValueError("")
 
@@ -555,9 +539,10 @@ def download_feed(
         disposition_filename or (os.path.basename(resp.url) if resp.url.endswith(".zip") else None) or default_filename
     )
 
-    extract = GTFSFeedExtractInfo(
-        # TODO: handle this in pydantic?
-        filename=filename.strip('"'),
+    extract_class = GTFSFeedExtractInfo if record.data == GTFSFeedType.schedule else GTFSRTFeedExtract
+
+    extract = extract_class(
+        filename=filename,
         config=record,
         response_code=resp.status_code,
         response_headers=resp.headers,
