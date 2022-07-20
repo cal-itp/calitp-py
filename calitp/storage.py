@@ -567,7 +567,6 @@ class GTFSScheduleFeedValidation(PartitionedGCSArtifact):
 
 class GTFSScheduleFeedExtractValidationOutcome(ProcessingOutcome):
     input_type: ClassVar[Type[PartitionedGCSArtifact]] = GTFSFeedExtractInfo
-    extract: GTFSFeedExtractInfo
     validation: Optional[GTFSScheduleFeedValidation]
 
 
