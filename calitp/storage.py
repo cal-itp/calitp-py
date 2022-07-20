@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime
 from enum import Enum
 from typing import ClassVar, Dict, List, Optional, Type, Union, get_type_hints
 
@@ -20,6 +21,8 @@ from requests import Request, Session
 from typing_extensions import Annotated, Literal
 
 from .config import get_bucket, is_cloud, is_development, require_pipeline
+
+JSONL_GZIP_EXTENSION = ".jsonl.gz"
 
 
 def get_fs(gcs_project="", **kwargs):
@@ -325,7 +328,7 @@ def fetch_all_in_partition(
             raise TypeError("must either pass bucket, or the bucket must resolve to a string")
 
     if not table:
-        table = cls.bucket
+        table = cls.table
 
         if not isinstance(table, str):
             raise TypeError("must either pass table, or the table must resolve to a string")
@@ -482,6 +485,12 @@ class GTFSFeedExtractInfo(PartitionedGCSArtifact):
     response_headers: Optional[Dict[str, str]]
     ts: pendulum.DateTime
 
+    @validator("ts", allow_reuse=True)
+    def coerce_ts(cls, v):
+        if isinstance(v, datetime):
+            return pendulum.instance(v)
+        return v
+
     @property
     def table(self) -> GTFSFeedType:
         return self.config.data
@@ -551,11 +560,15 @@ class GTFSScheduleFeedValidation(PartitionedGCSArtifact):
     def base64_url(self) -> str:
         return self.extract.config.base64_encoded_url
 
+    @property
+    def ts(self) -> pendulum.DateTime:
+        return self.extract.ts
+
 
 class GTFSScheduleFeedExtractValidationOutcome(ProcessingOutcome):
     input_type: ClassVar[Type[PartitionedGCSArtifact]] = GTFSFeedExtractInfo
     extract: GTFSFeedExtractInfo
-    validation: GTFSScheduleFeedValidation
+    validation: Optional[GTFSScheduleFeedValidation]
 
 
 # TODO: this and DownloadFeedsResult probably deserve a base class
