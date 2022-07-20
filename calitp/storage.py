@@ -313,10 +313,23 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
 def fetch_all_in_partition(
     cls: Type[PartitionedGCSArtifact],
     fs: gcsfs.GCSFileSystem,
-    bucket: str,
-    table: str,
     partitions: Dict[str, PartitionType],
+    bucket: str = None,
+    table: str = None,
+    verbose=False,
 ) -> List[Type[PartitionedGCSArtifact]]:
+    if not bucket:
+        bucket = cls.bucket
+
+        if not isinstance(bucket, str):
+            raise TypeError("must either pass bucket, or the bucket must resolve to a string")
+
+    if not table:
+        table = cls.bucket
+
+        if not isinstance(table, str):
+            raise TypeError("must either pass table, or the table must resolve to a string")
+
     path = "/".join(
         [
             bucket,
@@ -324,14 +337,13 @@ def fetch_all_in_partition(
             *[f"{key}={value}" for key, value in partitions.items()],
         ]
     )
+    if verbose:
+        print(f"walking {path}")
     files = parse_obj_as(
-        GCSObjectInfoList,
+        List[GCSObjectInfo],
         [v for _, _, files in list(fs.walk(path, detail=True)) for v in files.values()],
     )
-    return [
-        parse_obj_as(cls, json.loads(fs.getxattr(file.name, PARTITIONED_ARTIFACT_METADATA_KEY)))
-        for file in files.__root__
-    ]
+    return [parse_obj_as(cls, json.loads(fs.getxattr(file.name, PARTITIONED_ARTIFACT_METADATA_KEY))) for file in files]
 
 
 class ProcessingOutcome(BaseModel, abc.ABC):
@@ -524,6 +536,51 @@ class DownloadFeedsResult(PartitionedGCSArtifact):
         self.save_content(fs=fs, content="\n".join(o.json() for o in self.outcomes).encode(), exclude={"outcomes"})
 
 
+class GTFSScheduleFeedValidation(PartitionedGCSArtifact):
+    bucket: ClassVar[str] = prefix_bucket("gs://calitp-gtfs-schedule-validation")
+    table: ClassVar[str] = "validation_reports"
+    partition_names: ClassVar[List[str]] = GTFSFeedExtractInfo.partition_names
+    extract: GTFSFeedExtractInfo
+    system_errors: Dict
+
+    @property
+    def dt(self) -> pendulum.Date:
+        return self.extract.ts.date()
+
+    @property
+    def base64_url(self) -> str:
+        return self.extract.config.base64_encoded_url
+
+
+class GTFSScheduleFeedExtractValidationOutcome(ProcessingOutcome):
+    input_type: ClassVar[Type[PartitionedGCSArtifact]] = GTFSFeedExtractInfo
+    extract: GTFSFeedExtractInfo
+    validation: GTFSScheduleFeedValidation
+
+
+# TODO: this and DownloadFeedsResult probably deserve a base class
+class ScheduleValidationResult(PartitionedGCSArtifact):
+    bucket: ClassVar[str] = prefix_bucket("gs://calitp-gtfs-schedule-validation")
+    table: ClassVar[str] = "validation_results"
+    partition_names: ClassVar[List[str]] = ["dt"]
+    dt: pendulum.Date
+    outcomes: List[GTFSScheduleFeedExtractValidationOutcome]
+
+    @property
+    def successes(self) -> List[GTFSScheduleFeedExtractValidationOutcome]:
+        return [outcome for outcome in self.outcomes if outcome.success]
+
+    @property
+    def failures(self) -> List[GTFSScheduleFeedExtractValidationOutcome]:
+        return [outcome for outcome in self.outcomes if not outcome.success]
+
+    # TODO: I dislike having to exclude the records here
+    #   I need to figure out the best way to have a single type represent the "metadata" of
+    #   the content as well as the content itself
+    def save(self, fs):
+        self.save_content(fs=fs, content="\n".join(o.json() for o in self.outcomes).encode(), exclude={"outcomes"})
+
+
 def download_feed(
     record: AirtableGTFSDataRecord,
     auth_dict: Dict,
@@ -569,6 +626,18 @@ def download_feed(
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    for record in AirtableGTFSDataExtract.get_latest().records:
-        assert record.auth_query_param is not None
-        assert record.auth_header is not None
+    # for record in AirtableGTFSDataExtract.get_latest().records:
+    #     assert record.auth_query_param is not None
+    #     assert record.auth_header is not None
+    print(
+        len(
+            fetch_all_in_partition(
+                cls=GTFSFeedExtractInfo,
+                fs=get_fs(),
+                partitions={
+                    "dt": pendulum.today().date(),
+                },
+                table=GTFSFeedType.schedule,
+            )
+        )
+    )
