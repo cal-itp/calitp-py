@@ -22,7 +22,12 @@ from typing_extensions import Annotated, Literal
 
 from .config import get_bucket, is_cloud, is_development, require_pipeline
 
-JSONL_GZIP_EXTENSION = ".jsonl.gz"
+JSONL_EXTENSION = ".jsonl"
+JSONL_GZIP_EXTENSION = f"{JSONL_EXTENSION}.gz"
+
+AIRTABLE_BUCKET = "gs://calitp-airtable"
+SCHEDULE_RAW_BUCKET = "gs://calitp-gtfs-schedule-raw"
+SCHEDULE_PROCESSED_BUCKET = "gs://calitp-gtfs-schedule-processed"
 
 
 def get_fs(gcs_project="", **kwargs):
@@ -443,7 +448,7 @@ def get_latest_file(table_path: str, partitions: Dict[str, Type[PartitionType]])
 
 
 class AirtableGTFSDataExtract(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = prefix_bucket("gs://calitp-airtable")
+    bucket: ClassVar[str] = prefix_bucket(AIRTABLE_BUCKET)
     table: ClassVar[str] = "california_transit__gtfs_datasets"
     partition_names: ClassVar[List[str]] = ["dt", "ts"]
     ts: pendulum.DateTime
@@ -478,7 +483,7 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
 class GTFSFeedExtractInfo(PartitionedGCSArtifact):
     # TODO: this should check whether the bucket exists https://stackoverflow.com/a/65628273
     # TODO: this should be named `gtfs-raw` _or_ we make it dynamic
-    bucket: ClassVar[str] = prefix_bucket("gs://calitp-gtfs-schedule-raw")
+    bucket: ClassVar[str] = prefix_bucket(SCHEDULE_RAW_BUCKET)
     partition_names: ClassVar[List[str]] = ["dt", "base64_url", "ts"]
     config: AirtableGTFSDataRecord
     response_code: int
@@ -519,12 +524,17 @@ class AirtableGTFSDataRecordProcessingOutcome(ProcessingOutcome):
 
 
 class DownloadFeedsResult(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = prefix_bucket("gs://calitp-gtfs-schedule-raw")
+    bucket: ClassVar[str] = prefix_bucket(SCHEDULE_RAW_BUCKET)
     table: ClassVar[str] = "download_schedule_feed_results"
     partition_names: ClassVar[List[str]] = ["dt", "ts"]
     ts: pendulum.DateTime
     end: pendulum.DateTime
     outcomes: List[AirtableGTFSDataRecordProcessingOutcome]
+
+    @validator("filename", allow_reuse=True)
+    def is_jsonl(cls, v):
+        assert v.endswith(JSONL_EXTENSION)
+        return v
 
     @property
     def dt(self) -> pendulum.Date:
@@ -546,11 +556,16 @@ class DownloadFeedsResult(PartitionedGCSArtifact):
 
 
 class GTFSScheduleFeedValidation(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = prefix_bucket("gs://calitp-gtfs-schedule-validation")
+    bucket: ClassVar[str] = prefix_bucket(SCHEDULE_PROCESSED_BUCKET)
     table: ClassVar[str] = "validation_reports"
     partition_names: ClassVar[List[str]] = GTFSFeedExtractInfo.partition_names
     extract: GTFSFeedExtractInfo
     system_errors: Dict
+
+    @validator("filename", allow_reuse=True)
+    def is_jsonl_gz(cls, v):
+        assert v.endswith(JSONL_GZIP_EXTENSION)
+        return v
 
     @property
     def dt(self) -> pendulum.Date:
@@ -572,11 +587,16 @@ class GTFSScheduleFeedExtractValidationOutcome(ProcessingOutcome):
 
 # TODO: this and DownloadFeedsResult probably deserve a base class
 class ScheduleValidationResult(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = prefix_bucket("gs://calitp-gtfs-schedule-validation")
+    bucket: ClassVar[str] = prefix_bucket(SCHEDULE_PROCESSED_BUCKET)
     table: ClassVar[str] = "validation_results"
     partition_names: ClassVar[List[str]] = ["dt"]
     dt: pendulum.Date
     outcomes: List[GTFSScheduleFeedExtractValidationOutcome]
+
+    @validator("filename", allow_reuse=True)
+    def is_jsonl(cls, v):
+        assert v.endswith(JSONL_EXTENSION)
+        return v
 
     @property
     def successes(self) -> List[GTFSScheduleFeedExtractValidationOutcome]:
