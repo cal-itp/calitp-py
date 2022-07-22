@@ -618,9 +618,6 @@ def download_feed(
     auth_dict: Dict,
     default_filename="feed",
 ) -> (Union[GTFSFeedExtractInfo, GTFSRTFeedExtract], bytes):
-    if not record.uri:
-        raise ValueError("")
-
     parse_obj_as(HttpUrl, record.uri)
 
     s = Session()
