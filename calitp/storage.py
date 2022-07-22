@@ -25,10 +25,6 @@ from .config import get_bucket, is_cloud, is_development, require_pipeline
 JSONL_EXTENSION = ".jsonl"
 JSONL_GZIP_EXTENSION = f"{JSONL_EXTENSION}.gz"
 
-AIRTABLE_BUCKET = "gs://calitp-airtable"
-SCHEDULE_RAW_BUCKET = "gs://calitp-gtfs-schedule-raw"
-SCHEDULE_PROCESSED_BUCKET = "gs://calitp-gtfs-schedule-processed"
-
 
 def get_fs(gcs_project="", **kwargs):
     if is_cloud():
@@ -107,6 +103,12 @@ def prefix_bucket(bucket):
     # bucket = bucket.removeprefix("gs://")
     bucket = bucket.replace("gs://", "")
     return f"gs://test-{bucket}" if is_development() else f"gs://{bucket}"
+
+
+AIRTABLE_BUCKET = prefix_bucket("gs://calitp-airtable")
+SCHEDULE_RAW_BUCKET = prefix_bucket("gs://calitp-gtfs-schedule-raw")
+RT_RAW_BUCKET = prefix_bucket("gs://calitp-gtfs-rt-raw")
+SCHEDULE_PROCESSED_BUCKET = prefix_bucket("gs://calitp-gtfs-schedule-processed")
 
 
 PARTITIONED_ARTIFACT_METADATA_KEY = "PARTITIONED_ARTIFACT_METADATA"
@@ -448,7 +450,7 @@ def get_latest_file(table_path: str, partitions: Dict[str, Type[PartitionType]])
 
 
 class AirtableGTFSDataExtract(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = prefix_bucket(AIRTABLE_BUCKET)
+    bucket: ClassVar[str] = AIRTABLE_BUCKET
     table: ClassVar[str] = "california_transit__gtfs_datasets"
     partition_names: ClassVar[List[str]] = ["dt", "ts"]
     ts: pendulum.DateTime
@@ -483,7 +485,7 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
 class GTFSFeedExtractInfo(PartitionedGCSArtifact):
     # TODO: this should check whether the bucket exists https://stackoverflow.com/a/65628273
     # TODO: this should be named `gtfs-raw` _or_ we make it dynamic
-    bucket: ClassVar[str] = prefix_bucket(SCHEDULE_RAW_BUCKET)
+    bucket: ClassVar[str] = SCHEDULE_RAW_BUCKET
     partition_names: ClassVar[List[str]] = ["dt", "base64_url", "ts"]
     config: AirtableGTFSDataRecord
     response_code: int
@@ -510,7 +512,7 @@ class GTFSFeedExtractInfo(PartitionedGCSArtifact):
 
 
 class GTFSRTFeedExtract(GTFSFeedExtractInfo):
-    bucket: ClassVar[str] = prefix_bucket("gs://calitp-gtfs-rt-raw")
+    bucket: ClassVar[str] = RT_RAW_BUCKET
     partition_names: ClassVar[List[str]] = ["dt", "hour", "base64_url", "ts"]
 
     @property
@@ -524,7 +526,7 @@ class AirtableGTFSDataRecordProcessingOutcome(ProcessingOutcome):
 
 
 class DownloadFeedsResult(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = prefix_bucket(SCHEDULE_RAW_BUCKET)
+    bucket: ClassVar[str] = SCHEDULE_RAW_BUCKET
     table: ClassVar[str] = "download_schedule_feed_results"
     partition_names: ClassVar[List[str]] = ["dt", "ts"]
     ts: pendulum.DateTime
@@ -556,7 +558,7 @@ class DownloadFeedsResult(PartitionedGCSArtifact):
 
 
 class GTFSScheduleFeedValidation(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = prefix_bucket(SCHEDULE_PROCESSED_BUCKET)
+    bucket: ClassVar[str] = SCHEDULE_PROCESSED_BUCKET
     table: ClassVar[str] = "validation_reports"
     partition_names: ClassVar[List[str]] = GTFSFeedExtractInfo.partition_names
     extract: GTFSFeedExtractInfo
@@ -587,7 +589,7 @@ class GTFSScheduleFeedExtractValidationOutcome(ProcessingOutcome):
 
 # TODO: this and DownloadFeedsResult probably deserve a base class
 class ScheduleValidationResult(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = prefix_bucket(SCHEDULE_PROCESSED_BUCKET)
+    bucket: ClassVar[str] = SCHEDULE_PROCESSED_BUCKET
     table: ClassVar[str] = "validation_results"
     partition_names: ClassVar[List[str]] = ["dt"]
     dt: pendulum.Date
