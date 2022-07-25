@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field, HttpUrl, constr, validator
 from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
 from requests import Request, Session
+from tqdm import tqdm
 from typing_extensions import Annotated, Literal
 
 from .config import get_bucket, is_cloud, is_development, require_pipeline
@@ -327,6 +328,7 @@ def fetch_all_in_partition(
     bucket: str = None,
     table: str = None,
     verbose=False,
+    progress=False,
 ) -> List[Type[PartitionedGCSArtifact]]:
     if not bucket:
         bucket = cls.bucket
@@ -349,9 +351,12 @@ def fetch_all_in_partition(
     )
     if verbose:
         print(f"walking {path}")
+    walk = fs.walk(path, detail=True)
+    if progress:
+        walk = tqdm(walk)
     files = parse_obj_as(
         List[GCSObjectInfo],
-        [v for _, _, files in list(fs.walk(path, detail=True)) for v in files.values()],
+        [v for _, _, files in walk for v in files.values()],
     )
     return [parse_obj_as(cls, json.loads(fs.getxattr(file.name, PARTITIONED_ARTIFACT_METADATA_KEY))) for file in files]
 
