@@ -513,7 +513,7 @@ class GTFSFeedExtractInfo(PartitionedGCSArtifact):
 
 class GTFSRTFeedExtract(GTFSFeedExtractInfo):
     bucket: ClassVar[str] = RT_RAW_BUCKET
-    partition_names: ClassVar[List[str]] = ["dt", "hour", "base64_url", "ts"]
+    partition_names: ClassVar[List[str]] = ["dt", "hour", "ts", "base64_url"]
 
     @property
     def hour(self) -> pendulum.DateTime:
@@ -618,6 +618,7 @@ class ScheduleValidationResult(PartitionedGCSArtifact):
 def download_feed(
     record: AirtableGTFSDataRecord,
     auth_dict: Dict,
+    ts: pendulum.DateTime,
     default_filename="feed",
 ) -> (Union[GTFSFeedExtractInfo, GTFSRTFeedExtract], bytes):
     parse_obj_as(HttpUrl, record.uri)
@@ -649,7 +650,7 @@ def download_feed(
         config=record,
         response_code=resp.status_code,
         response_headers=resp.headers,
-        ts=pendulum.now(),
+        ts=ts,
     )
 
     return extract, resp.content
