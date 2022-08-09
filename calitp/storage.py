@@ -142,7 +142,7 @@ class GTFSFeedType(str, Enum):
 class AirtableGTFSDataRecord(BaseModel):
     name: str
     uri: Optional[str]
-    data: GTFSFeedType
+    data: Optional[GTFSFeedType]
     data_quality_pipeline: Optional[bool]
     schedule_to_use_for_rt_validation: Optional[List[str]]
     auth_query_param: Dict[str, str] = {}
@@ -153,7 +153,7 @@ class AirtableGTFSDataRecord(BaseModel):
     # TODO: this is a bit hacky but we need this until we split off auth query params from the URI itself
     @root_validator(pre=True, allow_reuse=True)
     def parse_query_params(cls, values):
-        if values["uri"]:
+        if values.get("uri"):
             jinja_pattern = r"(?P<param_name>\w+)={{\s*(?P<param_lookup_key>\w+)\s*}}"
             match = re.search(jinja_pattern, values["uri"])
             if match:
@@ -163,6 +163,9 @@ class AirtableGTFSDataRecord(BaseModel):
 
     @validator("data", pre=True, allow_reuse=True)
     def convert_feed_type(cls, v):
+        if not v:
+            return None
+
         if "schedule" in v.lower():
             return GTFSFeedType.schedule
         elif "vehicle" in v.lower():
@@ -171,6 +174,7 @@ class AirtableGTFSDataRecord(BaseModel):
             return GTFSFeedType.trip_updates
         elif "alerts" in v.lower():
             return GTFSFeedType.service_alerts
+
         return v
 
     @property
