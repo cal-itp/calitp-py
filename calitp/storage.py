@@ -566,7 +566,7 @@ class GTFSScheduleFeedValidation(PartitionedGCSArtifact):
     bucket: ClassVar[str] = SCHEDULE_PROCESSED_BUCKET
     table: ClassVar[str] = "validation_reports"
     partition_names: ClassVar[List[str]] = GTFSFeedExtractInfo.partition_names
-    extract: GTFSFeedExtractInfo
+    extract: GTFSFeedExtractInfo = Field(..., exclude={"config"})
     system_errors: Dict
 
     @validator("filename", allow_reuse=True)
@@ -590,6 +590,9 @@ class GTFSScheduleFeedValidation(PartitionedGCSArtifact):
 class GTFSScheduleFeedExtractValidationOutcome(ProcessingOutcome):
     input_type: ClassVar[Type[PartitionedGCSArtifact]] = GTFSFeedExtractInfo
     validation: Optional[GTFSScheduleFeedValidation]
+
+    class Config:
+        fields = {"input_record": {"config": {"exclude": True}}}
 
 
 # TODO: this and DownloadFeedsResult probably deserve a base class
