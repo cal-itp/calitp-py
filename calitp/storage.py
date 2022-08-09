@@ -21,7 +21,7 @@ from requests import Request, Session
 from tqdm import tqdm
 from typing_extensions import Annotated, Literal
 
-from .config import get_bucket, is_cloud, is_development, require_pipeline
+from .config import get_bucket, is_cloud, require_pipeline
 
 JSONL_EXTENSION = ".jsonl"
 JSONL_GZIP_EXTENSION = f"{JSONL_EXTENSION}.gz"
@@ -99,17 +99,9 @@ def make_name_bq_safe(name: str):
     return str.lower(re.sub("[^\w]", "_", name))  # noqa: W605
 
 
-def prefix_bucket(bucket):
-    # TODO: use once we're in python 3.9+
-    # bucket = bucket.removeprefix("gs://")
-    bucket = bucket.replace("gs://", "")
-    return f"gs://test-{bucket}" if is_development() else f"gs://{bucket}"
-
-
-AIRTABLE_BUCKET = prefix_bucket("gs://calitp-airtable")
-SCHEDULE_RAW_BUCKET = prefix_bucket("gs://calitp-gtfs-schedule-raw")
-RT_RAW_BUCKET = prefix_bucket("gs://calitp-gtfs-rt-raw")
-SCHEDULE_PROCESSED_BUCKET = prefix_bucket("gs://calitp-gtfs-schedule-processed")
+AIRTABLE_BUCKET = os.getenv("CALITP_BUCKET__AIRTABLE")
+SCHEDULE_RAW_BUCKET = os.getenv("CALITP_BUCKET__SCHEDULE_RAW")
+RT_RAW_BUCKET = os.getenv("CALITP_BUCKET__RT_RAW")
 
 
 PARTITIONED_ARTIFACT_METADATA_KEY = "PARTITIONED_ARTIFACT_METADATA"
@@ -236,6 +228,11 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
     @abc.abstractmethod
     def bucket(self) -> str:
         """Bucket name"""
+
+    @validator("bucket", check_fields=False, allow_reuse=True)
+    def bucket_exists(cls, v):
+        if not storage.Client().bucket(v).exists():
+            raise ValueError(f"bucket {v} does not exist")
 
     @property
     @abc.abstractmethod
@@ -364,17 +361,10 @@ def fetch_all_in_partition(
 class ProcessingOutcome(BaseModel, abc.ABC):
     success: bool
     exception: Optional[Exception]
-    input_record: BaseModel
 
     class Config:
         arbitrary_types_allowed = True
         json_encoders = {Exception: lambda e: str(e)}
-
-    # TODO: is this really useful?
-    @property
-    @abc.abstractmethod
-    def input_type(self) -> Type[PartitionedGCSArtifact]:
-        """The input type that was processed to produce this outcome."""
 
 
 class GCSBaseInfo(BaseModel, abc.ABC):
@@ -488,8 +478,6 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
 
 
 class GTFSFeedExtractInfo(PartitionedGCSArtifact):
-    # TODO: this should check whether the bucket exists https://stackoverflow.com/a/65628273
-    # TODO: this should be named `gtfs-raw` _or_ we make it dynamic
     bucket: ClassVar[str] = SCHEDULE_RAW_BUCKET
     partition_names: ClassVar[List[str]] = ["dt", "base64_url", "ts"]
     config: AirtableGTFSDataRecord
@@ -523,104 +511,6 @@ class GTFSRTFeedExtract(GTFSFeedExtractInfo):
     @property
     def hour(self) -> pendulum.DateTime:
         return self.ts.replace(minute=0, second=0, microsecond=0)
-
-
-class AirtableGTFSDataRecordProcessingOutcome(ProcessingOutcome):
-    input_type: ClassVar[Type[PartitionedGCSArtifact]] = GTFSFeedExtractInfo
-    extract: Optional[GTFSFeedExtractInfo]
-
-
-class DownloadFeedsResult(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = SCHEDULE_RAW_BUCKET
-    table: ClassVar[str] = "download_schedule_feed_results"
-    partition_names: ClassVar[List[str]] = ["dt", "ts"]
-    ts: pendulum.DateTime
-    end: pendulum.DateTime
-    outcomes: List[AirtableGTFSDataRecordProcessingOutcome]
-
-    @validator("filename", allow_reuse=True)
-    def is_jsonl(cls, v):
-        assert v.endswith(JSONL_EXTENSION)
-        return v
-
-    @property
-    def dt(self) -> pendulum.Date:
-        return self.ts.date()
-
-    @property
-    def successes(self) -> List[AirtableGTFSDataRecordProcessingOutcome]:
-        return [outcome for outcome in self.outcomes if outcome.success]
-
-    @property
-    def failures(self) -> List[AirtableGTFSDataRecordProcessingOutcome]:
-        return [outcome for outcome in self.outcomes if not outcome.success]
-
-    # TODO: I dislike having to exclude the records here
-    #   I need to figure out the best way to have a single type represent the "metadata" of
-    #   the content as well as the content itself
-    def save(self, fs):
-        self.save_content(fs=fs, content="\n".join(o.json() for o in self.outcomes).encode(), exclude={"outcomes"})
-
-
-class GTFSScheduleFeedValidation(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = SCHEDULE_PROCESSED_BUCKET
-    table: ClassVar[str] = "validation_reports"
-    partition_names: ClassVar[List[str]] = GTFSFeedExtractInfo.partition_names
-    extract: GTFSFeedExtractInfo = Field(..., exclude={"config"})
-    system_errors: Dict
-
-    @validator("filename", allow_reuse=True)
-    def is_jsonl_gz(cls, v):
-        assert v.endswith(JSONL_GZIP_EXTENSION)
-        return v
-
-    @property
-    def dt(self) -> pendulum.Date:
-        return self.extract.ts.date()
-
-    @property
-    def base64_url(self) -> str:
-        return self.extract.config.base64_encoded_url
-
-    @property
-    def ts(self) -> pendulum.DateTime:
-        return self.extract.ts
-
-
-class GTFSScheduleFeedExtractValidationOutcome(ProcessingOutcome):
-    input_type: ClassVar[Type[PartitionedGCSArtifact]] = GTFSFeedExtractInfo
-    validation: Optional[GTFSScheduleFeedValidation]
-
-    class Config:
-        fields = {"input_record": {"config": {"exclude": True}}}
-
-
-# TODO: this and DownloadFeedsResult probably deserve a base class
-class ScheduleValidationResult(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = SCHEDULE_PROCESSED_BUCKET
-    table: ClassVar[str] = "validation_results"
-    partition_names: ClassVar[List[str]] = ["dt"]
-    dt: pendulum.Date
-    outcomes: List[GTFSScheduleFeedExtractValidationOutcome]
-
-    @validator("filename", allow_reuse=True)
-    def is_jsonl(cls, v):
-        assert v.endswith(JSONL_EXTENSION)
-        return v
-
-    @property
-    def successes(self) -> List[GTFSScheduleFeedExtractValidationOutcome]:
-        return [outcome for outcome in self.outcomes if outcome.success]
-
-    @property
-    def failures(self) -> List[GTFSScheduleFeedExtractValidationOutcome]:
-        return [outcome for outcome in self.outcomes if not outcome.success]
-
-    # TODO: I dislike having to exclude the records here
-    #   I need to figure out the best way to have a single type represent the "metadata" of
-    #   the content as well as the content itself
-    def save(self, fs):
-        self.save_content(fs=fs, content="\n".join(o.json() for o in self.outcomes).encode(), exclude={"outcomes"})
 
 
 def download_feed(
@@ -675,9 +565,10 @@ if __name__ == "__main__":
                 cls=GTFSFeedExtractInfo,
                 fs=get_fs(),
                 partitions={
-                    "dt": pendulum.today().date(),
+                    "dt": pendulum.yesterday().date(),
                 },
                 table=GTFSFeedType.schedule,
+                verbose=True,
             )
         )
     )
