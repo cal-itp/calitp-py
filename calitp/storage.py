@@ -159,6 +159,8 @@ class AirtableGTFSDataRecord(BaseModel):
             if match:
                 values["auth_query_param"] = {match.group("param_name"): match.group("param_lookup_key")}
                 values["uri"] = re.sub(jinja_pattern, "", values["uri"])
+            elif "api.511.org" in values["uri"]:
+                values["auth_query_param"] = {"api_key": "MTC_511_API_KEY"}
         return values
 
     @validator("data", pre=True, allow_reuse=True)
@@ -185,10 +187,15 @@ class AirtableGTFSDataRecord(BaseModel):
     # TODO: this should actually rely on airtable data!
     @property
     def auth_header(self) -> Dict[str, str]:
-        if self.uri and "goswift.ly" in self.uri:
-            return {
-                "authorization": "SWIFTLY_AUTHORIZATION_KEY_CALITP",
-            }
+        if self.uri:
+            if "goswift.ly" in self.uri:
+                return {
+                    "authorization": "SWIFTLY_AUTHORIZATION_KEY_CALITP",
+                }
+            if "west-hollywood" in self.uri:
+                return {
+                    "x-umo-iq-api-key": "WEHO_RT_KEY",
+                }
         return {}
 
     @property
