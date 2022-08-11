@@ -154,7 +154,7 @@ class AirtableGTFSDataRecord(BaseModel):
     @root_validator(pre=True, allow_reuse=True)
     def parse_query_params(cls, values):
         if values.get("uri"):
-            jinja_pattern = r"(?P<param_name>\w+)={{\s*(?P<param_lookup_key>\w+)\s*}}"
+            jinja_pattern = r"(?P<param_name>\w+)={{\s*(?P<param_lookup_key>\w+)\s*}}&?"
             match = re.search(jinja_pattern, values["uri"])
             if match:
                 values["auth_query_param"] = {match.group("param_name"): match.group("param_lookup_key")}
