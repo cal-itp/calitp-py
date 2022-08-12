@@ -14,6 +14,7 @@ import gcsfs
 import humanize
 import pendulum
 from google.cloud import storage
+from jinja2 import Environment, StrictUndefined, select_autoescape
 from pydantic import BaseModel, Field, HttpUrl, constr, validator
 from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
@@ -162,6 +163,15 @@ class AirtableGTFSDataRecord(BaseModel):
             elif "api.511.org" in values["uri"]:
                 values["auth_query_param"] = {"api_key": "MTC_511_API_KEY"}
         return values
+
+    @validator("uri", pre=True, allow_reuse=True)
+    def handle_remaining_jinja(cls, v):
+        if v:
+            data = {
+                "GRAAS_SERVER_URL": os.environ["GRAAS_SERVER_URL"],
+            }
+            return Environment(autoescape=select_autoescape(), undefined=StrictUndefined).from_string(v).render(**data)
+        return v
 
     @validator("data", pre=True, allow_reuse=True)
     def convert_feed_type(cls, v):
@@ -568,19 +578,19 @@ def download_feed(
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    # for record in AirtableGTFSDataExtract.get_latest().records:
-    #     assert record.auth_query_param is not None
-    #     assert record.auth_header is not None
-    print(
-        len(
-            fetch_all_in_partition(
-                cls=GTFSFeedExtractInfo,
-                fs=get_fs(),
-                partitions={
-                    "dt": pendulum.yesterday().date(),
-                },
-                table=GTFSFeedType.schedule,
-                verbose=True,
-            )
-        )
-    )
+    for record in AirtableGTFSDataExtract.get_latest().records:
+        if record.uri and "appspot" in record.uri:
+            print(record)
+    # print(
+    #     len(
+    #         fetch_all_in_partition(
+    #             cls=GTFSFeedExtractInfo,
+    #             fs=get_fs(),
+    #             partitions={
+    #                 "dt": pendulum.yesterday().date(),
+    #             },
+    #             table=GTFSFeedType.schedule,
+    #             verbose=True,
+    #         )
+    #     )
+    # )
