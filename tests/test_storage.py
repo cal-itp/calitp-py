@@ -1,9 +1,10 @@
 import uuid
 
 import pytest
+from pydantic import ValidationError
 
 from calitp.config import get_bucket
-from calitp.storage import get_fs
+from calitp.storage import AirtableGTFSDataRecord, get_fs
 
 GCS_BUCKET = "gs://calitp-py-ci"
 
@@ -32,4 +33,19 @@ def test_get_fs_pipe(tmp_name):
     res = fs.listdir(bucket_dir)
     assert len(res) == 1
 
-    fs.cat(fname) == "1"
+
+def test_airtable_gtfs_data_record_handles_weird_inputs() -> None:
+    AirtableGTFSDataRecord(
+        name="some valid name",
+        data=None,
+    )
+    AirtableGTFSDataRecord(
+        name="some valid name",
+        data="",
+    )
+
+    with pytest.raises(ValidationError):
+        AirtableGTFSDataRecord(
+            name="some valid name",
+            data="invalid string",
+        )

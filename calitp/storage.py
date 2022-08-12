@@ -14,6 +14,7 @@ import gcsfs
 import humanize
 import pendulum
 from google.cloud import storage
+from jinja2 import Environment, StrictUndefined, select_autoescape
 from pydantic import BaseModel, Field, HttpUrl, constr, validator
 from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
@@ -21,7 +22,7 @@ from requests import Request, Session
 from tqdm import tqdm
 from typing_extensions import Annotated, Literal
 
-from .config import get_bucket, is_cloud, is_development, require_pipeline
+from .config import get_bucket, is_cloud, require_pipeline
 
 JSONL_EXTENSION = ".jsonl"
 JSONL_GZIP_EXTENSION = f"{JSONL_EXTENSION}.gz"
@@ -99,17 +100,9 @@ def make_name_bq_safe(name: str):
     return str.lower(re.sub("[^\w]", "_", name))  # noqa: W605
 
 
-def prefix_bucket(bucket):
-    # TODO: use once we're in python 3.9+
-    # bucket = bucket.removeprefix("gs://")
-    bucket = bucket.replace("gs://", "")
-    return f"gs://test-{bucket}" if is_development() else f"gs://{bucket}"
-
-
-AIRTABLE_BUCKET = prefix_bucket("gs://calitp-airtable")
-SCHEDULE_RAW_BUCKET = prefix_bucket("gs://calitp-gtfs-schedule-raw")
-RT_RAW_BUCKET = prefix_bucket("gs://calitp-gtfs-rt-raw")
-SCHEDULE_PROCESSED_BUCKET = prefix_bucket("gs://calitp-gtfs-schedule-processed")
+AIRTABLE_BUCKET = os.getenv("CALITP_BUCKET__AIRTABLE")
+SCHEDULE_RAW_BUCKET = os.getenv("CALITP_BUCKET__GTFS_SCHEDULE_RAW")
+RT_RAW_BUCKET = os.getenv("CALITP_BUCKET__GTFS_RT_RAW")
 
 
 PARTITIONED_ARTIFACT_METADATA_KEY = "PARTITIONED_ARTIFACT_METADATA"
@@ -150,7 +143,7 @@ class GTFSFeedType(str, Enum):
 class AirtableGTFSDataRecord(BaseModel):
     name: str
     uri: Optional[str]
-    data: GTFSFeedType
+    data: Optional[GTFSFeedType]
     data_quality_pipeline: Optional[bool]
     schedule_to_use_for_rt_validation: Optional[List[str]]
     auth_query_param: Dict[str, str] = {}
@@ -161,16 +154,30 @@ class AirtableGTFSDataRecord(BaseModel):
     # TODO: this is a bit hacky but we need this until we split off auth query params from the URI itself
     @root_validator(pre=True, allow_reuse=True)
     def parse_query_params(cls, values):
-        if values["uri"]:
-            jinja_pattern = r"(?P<param_name>\w+)={{\s*(?P<param_lookup_key>\w+)\s*}}"
+        if values.get("uri"):
+            jinja_pattern = r"(?P<param_name>\w+)={{\s*(?P<param_lookup_key>\w+)\s*}}&?"
             match = re.search(jinja_pattern, values["uri"])
             if match:
                 values["auth_query_param"] = {match.group("param_name"): match.group("param_lookup_key")}
                 values["uri"] = re.sub(jinja_pattern, "", values["uri"])
+            elif "api.511.org" in values["uri"]:
+                values["auth_query_param"] = {"api_key": "MTC_511_API_KEY"}
         return values
+
+    @validator("uri", pre=True, allow_reuse=True)
+    def handle_remaining_jinja(cls, v):
+        if v:
+            data = {
+                "GRAAS_SERVER_URL": os.environ["GRAAS_SERVER_URL"],
+            }
+            return Environment(autoescape=select_autoescape(), undefined=StrictUndefined).from_string(v).render(**data)
+        return v
 
     @validator("data", pre=True, allow_reuse=True)
     def convert_feed_type(cls, v):
+        if not v:
+            return None
+
         if "schedule" in v.lower():
             return GTFSFeedType.schedule
         elif "vehicle" in v.lower():
@@ -179,6 +186,7 @@ class AirtableGTFSDataRecord(BaseModel):
             return GTFSFeedType.trip_updates
         elif "alerts" in v.lower():
             return GTFSFeedType.service_alerts
+
         return v
 
     @property
@@ -189,10 +197,15 @@ class AirtableGTFSDataRecord(BaseModel):
     # TODO: this should actually rely on airtable data!
     @property
     def auth_header(self) -> Dict[str, str]:
-        if self.uri and "goswift.ly" in self.uri:
-            return {
-                "authorization": "SWIFTLY_AUTHORIZATION_KEY_CALITP",
-            }
+        if self.uri:
+            if "goswift.ly" in self.uri:
+                return {
+                    "authorization": "SWIFTLY_AUTHORIZATION_KEY_CALITP",
+                }
+            if "west-hollywood" in self.uri:
+                return {
+                    "x-umo-iq-api-key": "WEHO_RT_KEY",
+                }
         return {}
 
     @property
@@ -236,6 +249,11 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
     @abc.abstractmethod
     def bucket(self) -> str:
         """Bucket name"""
+
+    @validator("bucket", check_fields=False, allow_reuse=True)
+    def bucket_exists(cls, v):
+        if not storage.Client().bucket(v).exists():
+            raise ValueError(f"bucket {v} does not exist")
 
     @property
     @abc.abstractmethod
@@ -364,17 +382,10 @@ def fetch_all_in_partition(
 class ProcessingOutcome(BaseModel, abc.ABC):
     success: bool
     exception: Optional[Exception]
-    input_record: BaseModel
 
     class Config:
         arbitrary_types_allowed = True
         json_encoders = {Exception: lambda e: str(e)}
-
-    # TODO: is this really useful?
-    @property
-    @abc.abstractmethod
-    def input_type(self) -> Type[PartitionedGCSArtifact]:
-        """The input type that was processed to produce this outcome."""
 
 
 class GCSBaseInfo(BaseModel, abc.ABC):
@@ -431,6 +442,7 @@ GCSObjectInfoList.update_forward_refs()
 # TODO: we could probably pass this a class
 def get_latest_file(table_path: str, partitions: Dict[str, Type[PartitionType]]) -> GCSFileInfo:
     fs = get_fs()
+    fs.invalidate_cache()
     directory = GCSDirectoryInfo(**fs.info(table_path))
 
     for key, typ in partitions.items():
@@ -488,8 +500,6 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
 
 
 class GTFSFeedExtractInfo(PartitionedGCSArtifact):
-    # TODO: this should check whether the bucket exists https://stackoverflow.com/a/65628273
-    # TODO: this should be named `gtfs-raw` _or_ we make it dynamic
     bucket: ClassVar[str] = SCHEDULE_RAW_BUCKET
     partition_names: ClassVar[List[str]] = ["dt", "base64_url", "ts"]
     config: AirtableGTFSDataRecord
@@ -523,101 +533,6 @@ class GTFSRTFeedExtract(GTFSFeedExtractInfo):
     @property
     def hour(self) -> pendulum.DateTime:
         return self.ts.replace(minute=0, second=0, microsecond=0)
-
-
-class AirtableGTFSDataRecordProcessingOutcome(ProcessingOutcome):
-    input_type: ClassVar[Type[PartitionedGCSArtifact]] = GTFSFeedExtractInfo
-    extract: Optional[GTFSFeedExtractInfo]
-
-
-class DownloadFeedsResult(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = SCHEDULE_RAW_BUCKET
-    table: ClassVar[str] = "download_schedule_feed_results"
-    partition_names: ClassVar[List[str]] = ["dt", "ts"]
-    ts: pendulum.DateTime
-    end: pendulum.DateTime
-    outcomes: List[AirtableGTFSDataRecordProcessingOutcome]
-
-    @validator("filename", allow_reuse=True)
-    def is_jsonl(cls, v):
-        assert v.endswith(JSONL_EXTENSION)
-        return v
-
-    @property
-    def dt(self) -> pendulum.Date:
-        return self.ts.date()
-
-    @property
-    def successes(self) -> List[AirtableGTFSDataRecordProcessingOutcome]:
-        return [outcome for outcome in self.outcomes if outcome.success]
-
-    @property
-    def failures(self) -> List[AirtableGTFSDataRecordProcessingOutcome]:
-        return [outcome for outcome in self.outcomes if not outcome.success]
-
-    # TODO: I dislike having to exclude the records here
-    #   I need to figure out the best way to have a single type represent the "metadata" of
-    #   the content as well as the content itself
-    def save(self, fs):
-        self.save_content(fs=fs, content="\n".join(o.json() for o in self.outcomes).encode(), exclude={"outcomes"})
-
-
-class GTFSScheduleFeedValidation(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = SCHEDULE_PROCESSED_BUCKET
-    table: ClassVar[str] = "validation_reports"
-    partition_names: ClassVar[List[str]] = GTFSFeedExtractInfo.partition_names
-    extract: GTFSFeedExtractInfo
-    system_errors: Dict
-
-    @validator("filename", allow_reuse=True)
-    def is_jsonl_gz(cls, v):
-        assert v.endswith(JSONL_GZIP_EXTENSION)
-        return v
-
-    @property
-    def dt(self) -> pendulum.Date:
-        return self.extract.ts.date()
-
-    @property
-    def base64_url(self) -> str:
-        return self.extract.config.base64_encoded_url
-
-    @property
-    def ts(self) -> pendulum.DateTime:
-        return self.extract.ts
-
-
-class GTFSScheduleFeedExtractValidationOutcome(ProcessingOutcome):
-    input_type: ClassVar[Type[PartitionedGCSArtifact]] = GTFSFeedExtractInfo
-    validation: Optional[GTFSScheduleFeedValidation]
-
-
-# TODO: this and DownloadFeedsResult probably deserve a base class
-class ScheduleValidationResult(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = SCHEDULE_PROCESSED_BUCKET
-    table: ClassVar[str] = "validation_results"
-    partition_names: ClassVar[List[str]] = ["dt"]
-    dt: pendulum.Date
-    outcomes: List[GTFSScheduleFeedExtractValidationOutcome]
-
-    @validator("filename", allow_reuse=True)
-    def is_jsonl(cls, v):
-        assert v.endswith(JSONL_EXTENSION)
-        return v
-
-    @property
-    def successes(self) -> List[GTFSScheduleFeedExtractValidationOutcome]:
-        return [outcome for outcome in self.outcomes if outcome.success]
-
-    @property
-    def failures(self) -> List[GTFSScheduleFeedExtractValidationOutcome]:
-        return [outcome for outcome in self.outcomes if not outcome.success]
-
-    # TODO: I dislike having to exclude the records here
-    #   I need to figure out the best way to have a single type represent the "metadata" of
-    #   the content as well as the content itself
-    def save(self, fs):
-        self.save_content(fs=fs, content="\n".join(o.json() for o in self.outcomes).encode(), exclude={"outcomes"})
 
 
 def download_feed(
@@ -663,18 +578,19 @@ def download_feed(
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    # for record in AirtableGTFSDataExtract.get_latest().records:
-    #     assert record.auth_query_param is not None
-    #     assert record.auth_header is not None
-    print(
-        len(
-            fetch_all_in_partition(
-                cls=GTFSFeedExtractInfo,
-                fs=get_fs(),
-                partitions={
-                    "dt": pendulum.today().date(),
-                },
-                table=GTFSFeedType.schedule,
-            )
-        )
-    )
+    for record in AirtableGTFSDataExtract.get_latest().records:
+        if record.uri and "appspot" in record.uri:
+            print(record)
+    # print(
+    #     len(
+    #         fetch_all_in_partition(
+    #             cls=GTFSFeedExtractInfo,
+    #             fs=get_fs(),
+    #             partitions={
+    #                 "dt": pendulum.yesterday().date(),
+    #             },
+    #             table=GTFSFeedType.schedule,
+    #             verbose=True,
+    #         )
+    #     )
+    # )
