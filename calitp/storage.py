@@ -432,6 +432,7 @@ GCSObjectInfoList.update_forward_refs()
 # TODO: we could probably pass this a class
 def get_latest_file(table_path: str, partitions: Dict[str, Type[PartitionType]]) -> GCSFileInfo:
     fs = get_fs()
+    fs.invalidate_cache()
     directory = GCSDirectoryInfo(**fs.info(table_path))
 
     for key, typ in partitions.items():
