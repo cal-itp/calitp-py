@@ -360,23 +360,18 @@ def fetch_all_in_partition(
         if not isinstance(table, str):
             raise TypeError("must either pass table, or the table must resolve to a string")
 
-    path = "/".join(
+    prefix = "/".join(
         [
-            bucket,
             table,
             *[f"{key}={value}" for key, value in partitions.items()],
+            "",
         ]
     )
     if verbose:
-        print(f"walking {path}")
-    walk = fs.walk(path, detail=True)
-    if progress:
-        walk = tqdm(walk)
-    files = parse_obj_as(
-        List[GCSObjectInfo],
-        [v for _, _, files in walk for v in files.values()],
-    )
-    return [parse_obj_as(cls, json.loads(fs.getxattr(file.name, PARTITIONED_ARTIFACT_METADATA_KEY))) for file in files]
+        print(f"listing all files in  {bucket}/{prefix}")
+    client = storage.Client()
+    files = client.list_blobs(bucket.removeprefix("gs://"), prefix=prefix, delimiter=None)
+    return [parse_obj_as(cls, json.loads(file.metadata[PARTITIONED_ARTIFACT_METADATA_KEY])) for file in files]
 
 
 class ProcessingOutcome(BaseModel, abc.ABC):
@@ -534,6 +529,22 @@ class GTFSRTFeedExtract(GTFSFeedExtractInfo):
     def hour(self) -> pendulum.DateTime:
         return self.ts.replace(minute=0, second=0, microsecond=0)
 
+    @property
+    def timestamped_filename(self):
+        """
+        Used for RT validation; it's faster to download and validate many files at once, and we need to identify
+        them on disk.
+        """
+        return str(self.path.name) + self.tick.strftime("__%Y-%m-%dT%H:%M:%SZ")
+
+    @property
+    def schedule_extract(self) -> GTFSFeedExtractInfo:
+        file = get_latest_file(
+            GTFSFeedExtractInfo.bucket_table(),
+            partitions={name: get_type_hints(self).get(name, str) for name in self.partition_names},
+        )
+        return
+
 
 def download_feed(
     record: AirtableGTFSDataRecord,
@@ -578,19 +589,22 @@ def download_feed(
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    for record in AirtableGTFSDataExtract.get_latest().records:
-        if record.uri and "appspot" in record.uri:
-            print(record)
-    # print(
-    #     len(
-    #         fetch_all_in_partition(
-    #             cls=GTFSFeedExtractInfo,
-    #             fs=get_fs(),
-    #             partitions={
-    #                 "dt": pendulum.yesterday().date(),
-    #             },
-    #             table=GTFSFeedType.schedule,
-    #             verbose=True,
-    #         )
-    #     )
-    # )
+    # for record in AirtableGTFSDataExtract.get_latest().records:
+    #     if record.uri and "appspot" in record.uri:
+    #         print(record)
+    yesterday_noon = pendulum.yesterday("UTC").replace(minute=0, second=0, microsecond=0)
+    print(
+        len(
+            fetch_all_in_partition(
+                cls=GTFSRTFeedExtract,
+                fs=get_fs(),
+                partitions={
+                    "dt": yesterday_noon.date(),
+                    "hour": yesterday_noon,
+                },
+                table=GTFSFeedType.vehicle_positions,
+                verbose=True,
+                progress=True,
+            )
+        )
+    )
