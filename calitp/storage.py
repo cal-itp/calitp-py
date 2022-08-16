@@ -535,7 +535,7 @@ class GTFSRTFeedExtract(GTFSFeedExtractInfo):
         Used for RT validation; it's faster to download and validate many files at once, and we need to identify
         them on disk.
         """
-        return str(self.path.name) + self.tick.strftime("__%Y-%m-%dT%H:%M:%SZ")
+        return str(self.filename) + self.ts.strftime("__%Y-%m-%dT%H:%M:%SZ")
 
     @property
     def schedule_extract(self) -> GTFSFeedExtractInfo:
@@ -543,7 +543,7 @@ class GTFSRTFeedExtract(GTFSFeedExtractInfo):
             GTFSFeedExtractInfo.bucket_table(),
             partitions={name: get_type_hints(self).get(name, str) for name in self.partition_names},
         )
-        return
+        return parse_obj_as(GTFSFeedExtractInfo, json.loads(get_fs().getxattr(file.name, PARTITIONED_ARTIFACT_METADATA_KEY)))
 
 
 def download_feed(
