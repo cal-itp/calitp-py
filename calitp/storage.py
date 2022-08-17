@@ -290,8 +290,8 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
 
     @root_validator(allow_reuse=True)
     def check_partitions(cls, values):
-        # TODO: this isn't great but feed extract partitions do depend on config
-        if cls == GTFSFeedExtractInfo:
+        # TODO: this isn't great but some partition_names are properties
+        if isinstance(cls.partition_names, property):
             return values
         cls_properties = [name for name in dir(cls) if isinstance(getattr(cls, name), property)]
         missing = [name for name in cls.partition_names if name not in values and name not in cls_properties]
