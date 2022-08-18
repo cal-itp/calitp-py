@@ -8,7 +8,7 @@ import os
 import re
 from datetime import datetime
 from enum import Enum
-from typing import ClassVar, Dict, List, Optional, Type, Union, get_type_hints
+from typing import ClassVar, Dict, List, Optional, Tuple, Type, Union, get_type_hints
 
 import gcsfs
 import humanize
@@ -19,7 +19,6 @@ from pydantic import BaseModel, Field, HttpUrl, constr, validator
 from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
 from requests import Request, Session
-from tqdm import tqdm
 from typing_extensions import Annotated, Literal
 
 from .config import get_bucket, is_cloud, require_pipeline
@@ -138,6 +137,18 @@ class GTFSFeedType(str, Enum):
     service_alerts = "service_alerts"
     trip_updates = "trip_updates"
     vehicle_positions = "vehicle_positions"
+
+    @property
+    def is_rt(self) -> bool:
+        if self == GTFSFeedType.schedule:
+            return False
+        if self in (
+            GTFSFeedType.service_alerts,
+            GTFSFeedType.trip_updates,
+            GTFSFeedType.vehicle_positions,
+        ):
+            return True
+        raise RuntimeError("we should not get here")
 
 
 class AirtableGTFSDataRecord(BaseModel):
@@ -279,6 +290,9 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
 
     @root_validator(allow_reuse=True)
     def check_partitions(cls, values):
+        # TODO: this isn't great but some partition_names are properties
+        if isinstance(cls.partition_names, property):
+            return values
         cls_properties = [name for name in dir(cls) if isinstance(getattr(cls, name), property)]
         missing = [name for name in cls.partition_names if name not in values and name not in cls_properties]
         if missing:
@@ -360,23 +374,18 @@ def fetch_all_in_partition(
         if not isinstance(table, str):
             raise TypeError("must either pass table, or the table must resolve to a string")
 
-    path = "/".join(
+    prefix = "/".join(
         [
-            bucket,
             table,
             *[f"{key}={value}" for key, value in partitions.items()],
+            "",
         ]
     )
     if verbose:
-        print(f"walking {path}")
-    walk = fs.walk(path, detail=True)
-    if progress:
-        walk = tqdm(walk)
-    files = parse_obj_as(
-        List[GCSObjectInfo],
-        [v for _, _, files in walk for v in files.values()],
-    )
-    return [parse_obj_as(cls, json.loads(fs.getxattr(file.name, PARTITIONED_ARTIFACT_METADATA_KEY))) for file in files]
+        print(f"listing all files in {bucket}/{prefix}")
+    client = storage.Client()
+    files = client.list_blobs(bucket.removeprefix("gs://"), prefix=prefix, delimiter=None)
+    return [parse_obj_as(cls, json.loads(file.metadata[PARTITIONED_ARTIFACT_METADATA_KEY])) for file in files]
 
 
 class ProcessingOutcome(BaseModel, abc.ABC):
@@ -500,7 +509,6 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
 
 
 class GTFSFeedExtractInfo(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = SCHEDULE_RAW_BUCKET
     partition_names: ClassVar[List[str]] = ["dt", "base64_url", "ts"]
     config: AirtableGTFSDataRecord
     response_code: int
@@ -514,25 +522,53 @@ class GTFSFeedExtractInfo(PartitionedGCSArtifact):
         return v
 
     @property
-    def table(self) -> GTFSFeedType:
+    def bucket(self) -> str:
+        if self.config.data.is_rt:
+            return RT_RAW_BUCKET
+        return SCHEDULE_RAW_BUCKET
+
+    @property
+    def table(self) -> str:
         return self.config.data
+
+    @property
+    def partition_names(self) -> List[str]:
+        if self.config.data.is_rt:
+            return ["dt", "hour", "ts", "base64_url"]
+        return ["dt", "base64_url", "ts"]
 
     @property
     def dt(self) -> pendulum.Date:
         return self.ts.date()
 
     @property
+    def hour(self) -> pendulum.DateTime:
+        return self.ts.replace(minute=0, second=0, microsecond=0)
+
+    @property
     def base64_url(self) -> str:
         return self.config.base64_encoded_url
 
-
-class GTFSRTFeedExtract(GTFSFeedExtractInfo):
-    bucket: ClassVar[str] = RT_RAW_BUCKET
-    partition_names: ClassVar[List[str]] = ["dt", "hour", "ts", "base64_url"]
+    @property
+    def timestamped_filename(self):
+        """
+        Used for RT validation; it's faster to download and validate many files at once, and we need to identify
+        them on disk.
+        """
+        return str(self.filename) + self.ts.strftime("__%Y-%m-%dT%H:%M:%SZ")
 
     @property
-    def hour(self) -> pendulum.DateTime:
-        return self.ts.replace(minute=0, second=0, microsecond=0)
+    def schedule_extract(self) -> "GTFSFeedExtractInfo":
+        if self.config.data == GTFSFeedType.schedule:
+            raise TypeError("cannot call schedule_extract on a schedule extract")
+
+        file = get_latest_file(
+            GTFSFeedExtractInfo.bucket_table(),
+            partitions={name: get_type_hints(self).get(name, str) for name in self.partition_names},
+        )
+        return parse_obj_as(
+            GTFSFeedExtractInfo, json.loads(get_fs().getxattr(file.name, PARTITIONED_ARTIFACT_METADATA_KEY))
+        )
 
 
 def download_feed(
@@ -540,7 +576,7 @@ def download_feed(
     auth_dict: Dict,
     ts: pendulum.DateTime,
     default_filename="feed",
-) -> (Union[GTFSFeedExtractInfo, GTFSRTFeedExtract], bytes):
+) -> Tuple[GTFSFeedExtractInfo, bytes]:
     parse_obj_as(HttpUrl, record.uri)
 
     s = Session()
@@ -563,9 +599,7 @@ def download_feed(
         disposition_filename or (os.path.basename(resp.url) if resp.url.endswith(".zip") else None) or default_filename
     )
 
-    extract_class = GTFSFeedExtractInfo if record.data == GTFSFeedType.schedule else GTFSRTFeedExtract
-
-    extract = extract_class(
+    extract = GTFSFeedExtractInfo(
         filename=filename,
         config=record,
         response_code=resp.status_code,
@@ -578,19 +612,38 @@ def download_feed(
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    for record in AirtableGTFSDataExtract.get_latest().records:
-        if record.uri and "appspot" in record.uri:
-            print(record)
-    # print(
-    #     len(
-    #         fetch_all_in_partition(
-    #             cls=GTFSFeedExtractInfo,
-    #             fs=get_fs(),
-    #             partitions={
-    #                 "dt": pendulum.yesterday().date(),
-    #             },
-    #             table=GTFSFeedType.schedule,
-    #             verbose=True,
-    #         )
-    #     )
-    # )
+    # for record in AirtableGTFSDataExtract.get_latest().records:
+    #     if record.uri and "appspot" in record.uri:
+    #         print(record)
+    yesterday_noon = pendulum.yesterday("UTC").replace(minute=0, second=0, microsecond=0)
+    print(
+        len(
+            fetch_all_in_partition(
+                cls=GTFSFeedExtractInfo,
+                fs=get_fs(),
+                partitions={
+                    "dt": yesterday_noon.date(),
+                    "hour": yesterday_noon,
+                },
+                bucket=RT_RAW_BUCKET,
+                table=GTFSFeedType.vehicle_positions,
+                verbose=True,
+                progress=True,
+            )
+        )
+    )
+    print(
+        len(
+            fetch_all_in_partition(
+                cls=GTFSFeedExtractInfo,
+                fs=get_fs(),
+                partitions={
+                    "dt": pendulum.parse("2022-08-12", exact=True),
+                },
+                bucket=SCHEDULE_RAW_BUCKET,
+                table=GTFSFeedType.schedule,
+                verbose=True,
+                progress=True,
+            )
+        )
+    )
