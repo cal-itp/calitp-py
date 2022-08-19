@@ -152,6 +152,7 @@ class GTFSFeedType(str, Enum):
 
 
 class AirtableGTFSDataRecord(BaseModel):
+    id: str
     name: str
     uri: Optional[str]
     data: Optional[GTFSFeedType]
@@ -484,12 +485,12 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
     # TODO: this should probably be abstracted somewhere... it's useful in lots of places, probably
     @classmethod
     def get_latest(cls) -> "AirtableGTFSDataExtract":
-        # TODO: this concatenation should live on the abstract base class probably
         latest = get_latest_file(
             cls.bucket,
             cls.table,
+            prefix_partitions={},
             # TODO: this doesn't pick up the type hint of dt since it's a property; it's fine as a string but we should fix
-            partitions={name: get_type_hints(cls).get(name, str) for name in cls.partition_names},
+            partition_types={name: get_type_hints(cls).get(name, str) for name in cls.partition_names},
         )
 
         logging.info(f"identified {latest.name} as the most recent extract of gtfs datasets")
@@ -568,27 +569,6 @@ class GTFSRTFeedExtract(GTFSFeedExtract):
         """
         return str(self.filename) + self.ts.strftime("__%Y-%m-%dT%H:%M:%SZ")
 
-    @property
-    def schedule_extract(self) -> "GTFSFeedExtract":
-        if self.config.data == GTFSFeedType.schedule:
-            raise TypeError("cannot call schedule_extract on a schedule extract")
-
-        # TODO: this does not work if we didn't download a schedule zip for that day
-        file = get_latest_file(
-            GTFSScheduleFeedExtract.bucket,
-            GTFSScheduleFeedExtract.table,
-            prefix_partitions={
-                "dt": self.dt,
-                "base64_url": self.base64_url,
-            },
-            partition_types={
-                "ts": pendulum.DateTime,
-            },
-        )
-        return parse_obj_as(
-            GTFSScheduleFeedExtract, json.loads(get_fs().getxattr(file.name, PARTITIONED_ARTIFACT_METADATA_KEY))
-        )
-
 
 def download_feed(
     record: AirtableGTFSDataRecord,
@@ -632,9 +612,7 @@ def download_feed(
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    # for record in AirtableGTFSDataExtract.get_latest().records:
-    #     if record.uri and "appspot" in record.uri:
-    #         print(record)
+    print(AirtableGTFSDataExtract.get_latest().path)
 
     # use Etc/UTC instead of UTC
     # Etc/UTC is what the pods get as a timezone... and it serializes to 2022-08-18T00:00:00+00:00

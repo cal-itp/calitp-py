@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "calitp"
-version = "2022.8.18.2a0"
+version = "2022.8.19a0"
 description = "Shared code for the Cal-ITP data codebases"
 authors = ["Andrew Vaccaro <atvaccaro@gmail.com>"]
 license = "GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007"
