@@ -573,6 +573,7 @@ class GTFSRTFeedExtract(GTFSFeedExtract):
         if self.config.data == GTFSFeedType.schedule:
             raise TypeError("cannot call schedule_extract on a schedule extract")
 
+        # TODO: this does not work if we didn't download a schedule zip for that day
         file = get_latest_file(
             GTFSScheduleFeedExtract.bucket,
             GTFSScheduleFeedExtract.table,
