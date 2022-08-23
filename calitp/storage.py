@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+from abc import ABC
 from datetime import datetime
 from enum import Enum
 from typing import ClassVar, Dict, List, Optional, Tuple, Type, Union, get_type_hints
@@ -127,9 +128,8 @@ def partition_map(path) -> Dict[str, PartitionType]:
     return {key: value for key, value in re.findall(r"/(\w+)=([\w\-:=+.]+)(?=/)", path)}
 
 
-# class GTFSFeedType(str, Enum):
-#     schedule = "schedule"
-#     rt = "rt"
+def serialize_partitions(partitions: Dict[str, PartitionType]) -> List[str]:
+    return [f"{name}={PARTITION_SERIALIZERS[type(value)](value)}" for name, value in partitions.items()]
 
 
 class GTFSFeedType(str, Enum):
@@ -148,10 +148,11 @@ class GTFSFeedType(str, Enum):
             GTFSFeedType.vehicle_positions,
         ):
             return True
-        raise RuntimeError("we should not get here")
+        raise RuntimeError(f"managed to end up with an invalid enum type of {self}")
 
 
 class AirtableGTFSDataRecord(BaseModel):
+    id: str
     name: str
     uri: Optional[str]
     data: Optional[GTFSFeedType]
@@ -271,11 +272,6 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
     def table(self) -> str:
         """Table name"""
 
-    @classmethod
-    def bucket_table(cls) -> str:
-        bucket = cls.bucket.replace("gs://", "")
-        return f"gs://{bucket}/{cls.table}/"
-
     @property
     @abc.abstractmethod
     def partition_names(self) -> List[str]:
@@ -283,6 +279,10 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
         Defines the partitions into which this artifact is organized.
         The order does matter!
         """
+
+    @property
+    def serialized_partitions(self) -> List[str]:
+        return serialize_partitions({name: getattr(self, name) for name in self.partition_names})
 
     @property
     def partition_types(self) -> Dict[str, Type[PartitionType]]:
@@ -299,29 +299,18 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
             raise ValueError(f"all partition names must exist as fields or properties; missing {missing}")
         return values
 
-    # TODO: these are repetitive
     @property
     def name(self):
         return os.path.join(
             self.table,
-            *[
-                f"{name}={PARTITION_SERIALIZERS[type(getattr(self, name))](getattr(self, name))}"
-                for name in self.partition_names
-            ],
+            *self.serialized_partitions,
             self.filename,
         )
 
+    # This exists because with gcsfs we pretend everything is a path rather than an object in a bucket
     @property
     def path(self):
-        return os.path.join(
-            self.bucket,
-            self.table,
-            *[
-                f"{name}={PARTITION_SERIALIZERS[type(getattr(self, name))](getattr(self, name))}"
-                for name in self.partition_names
-            ],
-            self.filename,
-        )
+        return os.path.join(self.bucket, self.name)
 
     def save_content(self, content: bytes, exclude=None, fs: gcsfs.GCSFileSystem = None, client: storage.Client = None):
         if (fs is None) == (client is None):
@@ -366,18 +355,18 @@ def fetch_all_in_partition(
         bucket = cls.bucket
 
         if not isinstance(bucket, str):
-            raise TypeError("must either pass bucket, or the bucket must resolve to a string")
+            raise TypeError(f"must either pass bucket, or the bucket must resolve to a string; got {type(bucket)}")
 
     if not table:
         table = cls.table
 
         if not isinstance(table, str):
-            raise TypeError("must either pass table, or the table must resolve to a string")
+            raise TypeError(f"must either pass table, or the table must resolve to a string; got {type(table)}")
 
     prefix = "/".join(
         [
             table,
-            *[f"{key}={value}" for key, value in partitions.items()],
+            *serialize_partitions(partitions),
             "",
         ]
     )
@@ -449,12 +438,19 @@ GCSObjectInfoList.update_forward_refs()
 
 
 # TODO: we could probably pass this a class
-def get_latest_file(table_path: str, partitions: Dict[str, Type[PartitionType]]) -> GCSFileInfo:
+def get_latest_file(
+    bucket: str,
+    table: str,
+    prefix_partitions: Dict[str, PartitionType],
+    partition_types: Dict[str, Type[PartitionType]],
+) -> GCSFileInfo:
     fs = get_fs()
     fs.invalidate_cache()
-    directory = GCSDirectoryInfo(**fs.info(table_path))
 
-    for key, typ in partitions.items():
+    prefix_info = fs.info("/".join([bucket, table, *serialize_partitions(prefix_partitions), ""]))
+    directory = GCSDirectoryInfo(**prefix_info)
+
+    for key, typ in partition_types.items():
         directory = sorted(
             directory.children(fs),
             key=lambda o: PARTITION_DESERIALIZERS[typ](o.partition[key]),
@@ -489,11 +485,12 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
     # TODO: this should probably be abstracted somewhere... it's useful in lots of places, probably
     @classmethod
     def get_latest(cls) -> "AirtableGTFSDataExtract":
-        # TODO: this concatenation should live on the abstract base class probably
         latest = get_latest_file(
-            cls.bucket_table(),
+            cls.bucket,
+            cls.table,
+            prefix_partitions={},
             # TODO: this doesn't pick up the type hint of dt since it's a property; it's fine as a string but we should fix
-            partitions={name: get_type_hints(cls).get(name, str) for name in cls.partition_names},
+            partition_types={name: get_type_hints(cls).get(name, str) for name in cls.partition_names},
         )
 
         logging.info(f"identified {latest.name} as the most recent extract of gtfs datasets")
@@ -508,12 +505,11 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
         )
 
 
-class GTFSFeedExtractInfo(PartitionedGCSArtifact):
-    partition_names: ClassVar[List[str]] = ["dt", "base64_url", "ts"]
+class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
+    ts: pendulum.DateTime
     config: AirtableGTFSDataRecord
     response_code: int
     response_headers: Optional[Dict[str, str]]
-    ts: pendulum.DateTime
 
     @validator("ts", allow_reuse=True)
     def coerce_ts(cls, v):
@@ -522,20 +518,8 @@ class GTFSFeedExtractInfo(PartitionedGCSArtifact):
         return v
 
     @property
-    def bucket(self) -> str:
-        if self.config.data.is_rt:
-            return RT_RAW_BUCKET
-        return SCHEDULE_RAW_BUCKET
-
-    @property
-    def table(self) -> str:
+    def feed_type(self) -> GTFSFeedType:
         return self.config.data
-
-    @property
-    def partition_names(self) -> List[str]:
-        if self.config.data.is_rt:
-            return ["dt", "hour", "ts", "base64_url"]
-        return ["dt", "base64_url", "ts"]
 
     @property
     def dt(self) -> pendulum.Date:
@@ -549,6 +533,34 @@ class GTFSFeedExtractInfo(PartitionedGCSArtifact):
     def base64_url(self) -> str:
         return self.config.base64_encoded_url
 
+
+class GTFSScheduleFeedExtract(GTFSFeedExtract):
+    bucket: ClassVar[str] = SCHEDULE_RAW_BUCKET
+    table: ClassVar[str] = GTFSFeedType.schedule
+    feed_type: ClassVar[str] = GTFSFeedType.schedule
+    partition_names: ClassVar[List[str]] = ["dt", "base64_url", "ts"]
+
+    @validator("config", allow_reuse=True)
+    def is_schedule_type(cls, v: AirtableGTFSDataRecord):
+        if v.data != GTFSFeedType.schedule:
+            raise TypeError("a schedule extract must come from a schedule config")
+        return v
+
+
+class GTFSRTFeedExtract(GTFSFeedExtract):
+    bucket: ClassVar[str] = RT_RAW_BUCKET
+    partition_names: ClassVar[List[str]] = ["dt", "hour", "ts", "base64_url"]
+
+    @validator("config", allow_reuse=True)
+    def is_rt_type(cls, v: AirtableGTFSDataRecord):
+        if not v.data.is_rt:
+            raise TypeError("a realtime extract must come from a realtime config")
+        return v
+
+    @property
+    def table(self) -> str:
+        return self.config.data
+
     @property
     def timestamped_filename(self):
         """
@@ -557,26 +569,13 @@ class GTFSFeedExtractInfo(PartitionedGCSArtifact):
         """
         return str(self.filename) + self.ts.strftime("__%Y-%m-%dT%H:%M:%SZ")
 
-    @property
-    def schedule_extract(self) -> "GTFSFeedExtractInfo":
-        if self.config.data == GTFSFeedType.schedule:
-            raise TypeError("cannot call schedule_extract on a schedule extract")
-
-        file = get_latest_file(
-            GTFSFeedExtractInfo.bucket_table(),
-            partitions={name: get_type_hints(self).get(name, str) for name in self.partition_names},
-        )
-        return parse_obj_as(
-            GTFSFeedExtractInfo, json.loads(get_fs().getxattr(file.name, PARTITIONED_ARTIFACT_METADATA_KEY))
-        )
-
 
 def download_feed(
     record: AirtableGTFSDataRecord,
     auth_dict: Dict,
     ts: pendulum.DateTime,
     default_filename="feed",
-) -> Tuple[GTFSFeedExtractInfo, bytes]:
+) -> Tuple[GTFSFeedExtract, bytes]:
     parse_obj_as(HttpUrl, record.uri)
 
     s = Session()
@@ -599,7 +598,8 @@ def download_feed(
         disposition_filename or (os.path.basename(resp.url) if resp.url.endswith(".zip") else None) or default_filename
     )
 
-    extract = GTFSFeedExtractInfo(
+    extract_class = GTFSRTFeedExtract if record.data.is_rt else GTFSScheduleFeedExtract
+    extract = extract_class(
         filename=filename,
         config=record,
         response_code=resp.status_code,
@@ -612,38 +612,45 @@ def download_feed(
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    # for record in AirtableGTFSDataExtract.get_latest().records:
-    #     if record.uri and "appspot" in record.uri:
-    #         print(record)
-    yesterday_noon = pendulum.yesterday("UTC").replace(minute=0, second=0, microsecond=0)
-    print(
-        len(
-            fetch_all_in_partition(
-                cls=GTFSFeedExtractInfo,
-                fs=get_fs(),
-                partitions={
-                    "dt": yesterday_noon.date(),
-                    "hour": yesterday_noon,
-                },
-                bucket=RT_RAW_BUCKET,
-                table=GTFSFeedType.vehicle_positions,
-                verbose=True,
-                progress=True,
-            )
-        )
+    print(AirtableGTFSDataExtract.get_latest().path)
+
+    # use Etc/UTC instead of UTC
+    # Etc/UTC is what the pods get as a timezone... and it serializes to 2022-08-18T00:00:00+00:00
+    # whereas UTC serializes to 2022-08-18T00:00:00Z
+    # this should probably be checked in the partitioned artifact?
+    yesterday_noon = pendulum.yesterday("Etc/UTC").replace(minute=0, second=0, microsecond=0)
+    vp_files = fetch_all_in_partition(
+        cls=GTFSRTFeedExtract,
+        fs=get_fs(),
+        partitions={
+            "dt": yesterday_noon.date(),
+            "hour": yesterday_noon,
+        },
+        table=GTFSFeedType.vehicle_positions,
+        verbose=True,
+        progress=True,
     )
-    print(
-        len(
-            fetch_all_in_partition(
-                cls=GTFSFeedExtractInfo,
-                fs=get_fs(),
-                partitions={
-                    "dt": pendulum.parse("2022-08-12", exact=True),
-                },
-                bucket=SCHEDULE_RAW_BUCKET,
-                table=GTFSFeedType.schedule,
-                verbose=True,
-                progress=True,
-            )
-        )
+    print(len(vp_files))
+
+    schedule_files = fetch_all_in_partition(
+        cls=GTFSScheduleFeedExtract,
+        fs=get_fs(),
+        partitions={
+            "dt": pendulum.parse("2022-08-17", exact=True),
+        },
+        verbose=True,
+        progress=True,
     )
+    print(len(schedule_files))
+    latest_schedule = get_latest_file(
+        bucket=SCHEDULE_RAW_BUCKET,
+        table=GTFSFeedType.schedule,
+        prefix_partitions={
+            "dt": pendulum.parse("2022-08-12", exact=True),
+            "base64_url": "aHR0cHM6Ly9yaWRlbXZnby5vcmcvZ3Rmcw==",
+        },
+        partition_types={
+            "ts": pendulum.DateTime,
+        },
+    )
+    print(latest_schedule)

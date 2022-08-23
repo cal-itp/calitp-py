@@ -36,16 +36,19 @@ def test_get_fs_pipe(tmp_name):
 
 def test_airtable_gtfs_data_record_handles_weird_inputs() -> None:
     AirtableGTFSDataRecord(
+        id="abc",
         name="some valid name",
         data=None,
     )
     AirtableGTFSDataRecord(
+        id="abc",
         name="some valid name",
         data="",
     )
 
     with pytest.raises(ValidationError):
         AirtableGTFSDataRecord(
+            id="abc",
             name="some valid name",
             data="invalid string",
         )
