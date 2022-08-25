@@ -373,7 +373,9 @@ def fetch_all_in_partition(
     if verbose:
         print(f"listing all files in {bucket}/{prefix}")
     client = storage.Client()
-    files = client.list_blobs(bucket.removeprefix("gs://"), prefix=prefix, delimiter=None)
+    # once Airflow is upgraded to Python 3.9, can use:
+    # files = client.list_blobs(bucket.removeprefix("gs://"), prefix=prefix, delimiter=None)
+    files = client.list_blobs(re.sub(r"^gs://","",bucket), prefix=prefix, delimiter=None)
     return [parse_obj_as(cls, json.loads(file.metadata[PARTITIONED_ARTIFACT_METADATA_KEY])) for file in files]
 
 
