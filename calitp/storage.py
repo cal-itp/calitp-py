@@ -103,7 +103,8 @@ def make_name_bq_safe(name: str):
 AIRTABLE_BUCKET = os.getenv("CALITP_BUCKET__AIRTABLE")
 SCHEDULE_RAW_BUCKET = os.getenv("CALITP_BUCKET__GTFS_SCHEDULE_RAW")
 RT_RAW_BUCKET = os.getenv("CALITP_BUCKET__GTFS_RT_RAW")
-
+DBT_ARTIFACT_BUCKET = os.getenv("CALITP_BUCKET__DBT_ARTIFACTS")
+PUBLISH_BUCKET = os.getenv("CALITP_BUCKET__PUBLISH")
 
 PARTITIONED_ARTIFACT_METADATA_KEY = "PARTITIONED_ARTIFACT_METADATA"
 
@@ -617,6 +618,26 @@ def download_feed(
     )
 
     return extract, resp.content
+
+
+class DbtArtifact(PartitionedGCSArtifact):
+    bucket: ClassVar[str] = DBT_ARTIFACT_BUCKET
+    table: str
+    ts: pendulum.DateTime
+    partition_names: ClassVar[List[str]] = ["dt", "ts"]
+
+    def dt(self) -> pendulum.Date:
+        return self.ts.date()
+
+
+class PublishArtifact(PartitionedGCSArtifact):
+    bucket: ClassVar[str] = PUBLISH_BUCKET
+    table: str
+    ts: pendulum.DateTime
+    partition_names: ClassVar[List[str]] = ["dt", "ts"]
+
+    def dt(self) -> pendulum.Date:
+        return self.ts.date()
 
 
 if __name__ == "__main__":
