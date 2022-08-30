@@ -622,22 +622,31 @@ def download_feed(
 
 class DbtArtifact(PartitionedGCSArtifact):
     bucket: ClassVar[str] = DBT_ARTIFACT_BUCKET
-    table: str
+    table_name: str
     ts: pendulum.DateTime
     partition_names: ClassVar[List[str]] = ["dt", "ts"]
 
     def dt(self) -> pendulum.Date:
         return self.ts.date()
+
+    # This is really annoying but it's due to table being a property on the base class
+    @property
+    def table(self) -> str:
+        return self.table_name
 
 
 class PublishArtifact(PartitionedGCSArtifact):
     bucket: ClassVar[str] = PUBLISH_BUCKET
-    table: str
+    table_name: str
     ts: pendulum.DateTime
     partition_names: ClassVar[List[str]] = ["dt", "ts"]
 
     def dt(self) -> pendulum.Date:
         return self.ts.date()
+
+    @property
+    def table(self) -> str:
+        return self.table_name
 
 
 if __name__ == "__main__":
