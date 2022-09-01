@@ -6,16 +6,26 @@ import json
 import logging
 import os
 import re
+import sys
 from abc import ABC
 from datetime import datetime
 from enum import Enum
-from typing import ClassVar, Dict, List, Optional, Tuple, Type, Union, get_type_hints
+from typing import (
+    ClassVar,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    get_type_hints,
+)
 
 import gcsfs
 import humanize
 import pendulum
 from google.cloud import storage
-from jinja2 import Environment, StrictUndefined, select_autoescape
 from pydantic import BaseModel, Field, HttpUrl, constr, validator
 from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
@@ -155,35 +165,18 @@ class AirtableGTFSDataRecord(BaseModel):
     id: str
     name: str
     uri: Optional[str]
+    pipeline_url: Optional[str]
     data: Optional[GTFSFeedType]
     data_quality_pipeline: Optional[bool]
     schedule_to_use_for_rt_validation: Optional[List[str]]
+    authorization_url_parameter_name: Optional[str]
+    url_secret_key_name: Optional[str]
+    authorization_header_parameter_name: Optional[str]
+    header_secret_key_name: Optional[str]
     auth_query_param: Dict[str, str] = {}
 
     class Config:
         extra = "allow"
-
-    # TODO: this is a bit hacky but we need this until we split off auth query params from the URI itself
-    @root_validator(pre=True, allow_reuse=True)
-    def parse_query_params(cls, values):
-        if values.get("uri"):
-            jinja_pattern = r"(?P<param_name>\w+)={{\s*(?P<param_lookup_key>\w+)\s*}}&?"
-            match = re.search(jinja_pattern, values["uri"])
-            if match:
-                values["auth_query_param"] = {match.group("param_name"): match.group("param_lookup_key")}
-                values["uri"] = re.sub(jinja_pattern, "", values["uri"])
-            elif "api.511.org" in values["uri"]:
-                values["auth_query_param"] = {"api_key": "MTC_511_API_KEY"}
-        return values
-
-    @validator("uri", pre=True, allow_reuse=True)
-    def handle_remaining_jinja(cls, v):
-        if v:
-            data = {
-                "GRAAS_SERVER_URL": os.environ["GRAAS_SERVER_URL"],
-            }
-            return Environment(autoescape=select_autoescape(), undefined=StrictUndefined).from_string(v).render(**data)
-        return v
 
     @validator("data", pre=True, allow_reuse=True)
     def convert_feed_type(cls, v):
@@ -206,34 +199,26 @@ class AirtableGTFSDataRecord(BaseModel):
         # TODO: implement me
         raise NotImplementedError
 
-    # TODO: this should actually rely on airtable data!
-    @property
-    def auth_header(self) -> Dict[str, str]:
-        if self.uri:
-            if "goswift.ly" in self.uri:
-                return {
-                    "authorization": "SWIFTLY_AUTHORIZATION_KEY_CALITP",
-                }
-            if "west-hollywood" in self.uri:
-                return {
-                    "x-umo-iq-api-key": "WEHO_RT_KEY",
-                }
-        return {}
-
     @property
     def base64_encoded_url(self) -> str:
         # see: https://docs.python.org/3/library/base64.html#base64.urlsafe_b64encode
         # we care about replacing slashes for GCS object names
         # can use: https://www.base64url.com/ to test encoding/decoding
         # convert in bigquery: https://cloud.google.com/bigquery/docs/reference/standard-sql/string_functions#from_base64
-        return base64.urlsafe_b64encode(self.uri.encode()).decode()
+        return base64.urlsafe_b64encode(self.pipeline_url.encode()).decode()
 
-    def build_request(self, auth_dict: dict) -> Request:
-        params = {k: auth_dict[v] for k, v in self.auth_query_param.items()}
-        headers = {k: auth_dict[v] for k, v in self.auth_header.items()}
+    def build_request(self, auth_dict: Mapping[str, str]) -> Request:
+        params = {}
+        headers = {
+            # some web servers require user agents or they will throw a 4XX error
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:55.0) Gecko/20100101 Firefox/55.0",
+        }
 
-        # some web servers require user agents or they will throw a 4XX error
-        headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:55.0) Gecko/20100101 Firefox/55.0"
+        if self.authorization_url_parameter_name and self.url_secret_key_name:
+            params[self.authorization_url_parameter_name] = auth_dict[self.url_secret_key_name]
+
+        if self.authorization_header_parameter_name and self.header_secret_key_name:
+            headers[self.authorization_header_parameter_name] = auth_dict[self.header_secret_key_name]
 
         # inspired by: https://stackoverflow.com/questions/18869074/create-url-without-request-execution
         return Request(
@@ -614,7 +599,10 @@ def download_feed(
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    print(AirtableGTFSDataExtract.get_latest().path)
+    latest = AirtableGTFSDataExtract.get_latest()
+    print(latest.path)
+    latest.records[0].build_request({})
+    sys.exit(1)
 
     # use Etc/UTC instead of UTC
     # Etc/UTC is what the pods get as a timezone... and it serializes to 2022-08-18T00:00:00+00:00
