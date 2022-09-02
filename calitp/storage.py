@@ -223,7 +223,7 @@ class AirtableGTFSDataRecord(BaseModel):
         # inspired by: https://stackoverflow.com/questions/18869074/create-url-without-request-execution
         return Request(
             "GET",
-            url=self.uri,
+            url=self.pipeline_url,
             params=params,
             headers=headers,
         )
