@@ -559,11 +559,11 @@ class GTFSRTFeedExtract(GTFSFeedExtract):
 
 def download_feed(
     record: AirtableGTFSDataRecord,
-    auth_dict: Dict,
+    auth_dict: Mapping[str, str],
     ts: pendulum.DateTime,
     default_filename="feed",
 ) -> Tuple[GTFSFeedExtract, bytes]:
-    parse_obj_as(HttpUrl, record.uri)
+    parse_obj_as(HttpUrl, record.pipeline_url)
 
     s = Session()
     r = s.prepare_request(record.build_request(auth_dict))
