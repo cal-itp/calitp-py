@@ -4,6 +4,10 @@ from typing import Sequence
 import google_crc32c
 from google.cloud import secretmanager
 
+# We want to provide a default set of auth keys to
+# load but let services override if they want
+# TODO: maybe we should always provide the defaults,
+#  and just allow _additional_ from the env?
 AUTH_KEYS_ENV_VAR = "CALITP_AUTH_KEYS"
 if AUTH_KEYS_ENV_VAR in os.environ:
     DEFAULT_AUTH_KEYS = tuple(os.environ[AUTH_KEYS_ENV_VAR].split(","))
