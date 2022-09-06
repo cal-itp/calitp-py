@@ -507,9 +507,16 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
         )
 
 
+class GTFSExtractAirtableKeys(BaseModel):
+    airtable_extract_ts: pendulum.DateTime
+    record_id: str
+    base64_url: str
+
+
 class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
     ts: pendulum.DateTime
-    config: AirtableGTFSDataRecord
+    airtable_keys: GTFSExtractAirtableKeys
+    feed_type: GTFSFeedType
     response_code: int
     response_headers: Optional[Dict[str, str]]
 
@@ -518,10 +525,6 @@ class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
         if isinstance(v, datetime):
             return pendulum.instance(v)
         return v
-
-    @property
-    def feed_type(self) -> GTFSFeedType:
-        return self.config.data
 
     @property
     def dt(self) -> pendulum.Date:
@@ -533,7 +536,7 @@ class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
 
     @property
     def base64_url(self) -> str:
-        return self.config.base64_encoded_url
+        return self.airtable_keys.base64_url
 
 
 class GTFSScheduleFeedExtract(GTFSFeedExtract):
@@ -573,6 +576,7 @@ class GTFSRTFeedExtract(GTFSFeedExtract):
 
 
 def download_feed(
+    airtable_extract_ts: pendulum.DateTime,
     record: AirtableGTFSDataRecord,
     auth_dict: Dict,
     ts: pendulum.DateTime,
@@ -603,10 +607,15 @@ def download_feed(
     extract_class = GTFSRTFeedExtract if record.data.is_rt else GTFSScheduleFeedExtract
     extract = extract_class(
         filename=filename,
-        config=record,
+        ts=ts,
+        airtable_keys=GTFSExtractAirtableKeys(
+            airtable_extract_ts=airtable_extract_ts,
+            record_id=record.id,
+            base64_url=record.base64_encoded_url,
+        ),
+        feed_type=record.data,
         response_code=resp.status_code,
         response_headers=resp.headers,
-        ts=ts,
     )
 
     return extract, resp.content
