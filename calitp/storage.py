@@ -509,6 +509,7 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
 
 class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
     ts: pendulum.DateTime
+    config_extract_ts: pendulum.DateTime
     config: AirtableGTFSDataRecord
     response_code: int
     response_headers: Optional[Dict[str, str]]
@@ -573,6 +574,7 @@ class GTFSRTFeedExtract(GTFSFeedExtract):
 
 
 def download_feed(
+    record_extract_ts: pendulum.DateTime,
     record: AirtableGTFSDataRecord,
     auth_dict: Dict,
     ts: pendulum.DateTime,
@@ -603,6 +605,7 @@ def download_feed(
     extract_class = GTFSRTFeedExtract if record.data.is_rt else GTFSScheduleFeedExtract
     extract = extract_class(
         filename=filename,
+        config_extract_ts=record_extract_ts,
         config=record,
         response_code=resp.status_code,
         response_headers=resp.headers,
