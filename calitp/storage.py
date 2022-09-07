@@ -16,7 +16,7 @@ import humanize
 import pendulum
 from google.cloud import storage
 from jinja2 import Environment, select_autoescape
-from pydantic import BaseModel, Field, HttpUrl, constr, validator
+from pydantic import BaseModel, Field, HttpUrl, ValidationError, constr, validator
 from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
 from requests import Request, Session
@@ -319,11 +319,15 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
         if fs:
             logging.info(f"saving {humanize.naturalsize(len(content))} to {self.path}")
             fs.pipe(path=self.path, value=content)
-            fs.setxattrs(
-                path=self.path,
-                # This syntax seems silly but it's so we pass the _value_ of PARTITIONED_ARTIFACT_METADATA_KEY
-                **{PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)},
-            )
+            try:
+                fs.setxattrs(
+                    path=self.path,
+                    # This syntax seems silly but it's so we pass the _value_ of PARTITIONED_ARTIFACT_METADATA_KEY
+                    **{PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)},
+                )
+            except Exception:
+                fs.delete(self.path)
+                raise
 
         if client:
             logging.info(f"saving {humanize.naturalsize(len(content))} to {self.bucket} {self.name}")
@@ -338,8 +342,12 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
                 client=client,
             )
 
-            blob.metadata = {PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)}
-            blob.patch()
+            try:
+                blob.metadata = {PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)}
+                blob.patch()
+            except Exception:
+                blob.delete(client)
+                raise
 
 
 def fetch_all_in_partition(
@@ -376,7 +384,18 @@ def fetch_all_in_partition(
     # once Airflow is upgraded to Python 3.9, can use:
     # files = client.list_blobs(bucket.removeprefix("gs://"), prefix=prefix, delimiter=None)
     files = client.list_blobs(re.sub(r"^gs://", "", bucket), prefix=prefix, delimiter=None)
-    return [parse_obj_as(cls, json.loads(file.metadata[PARTITIONED_ARTIFACT_METADATA_KEY])) for file in files]
+
+    parsed = []
+
+    for file in files:
+        try:
+            parsed.append(parse_obj_as(cls, json.loads(file.metadata[PARTITIONED_ARTIFACT_METADATA_KEY])))
+        except (TypeError, KeyError) as e:
+            raise RuntimeError(f"metadata missing on {bucket}/{file.name}") from e
+        except ValidationError as e:
+            raise RuntimeError(f"invalid metadata found on {bucket}/{file.name}") from e
+
+    return parsed
 
 
 class ProcessingOutcome(BaseModel, abc.ABC):
@@ -641,7 +660,7 @@ if __name__ == "__main__":
         cls=GTFSScheduleFeedExtract,
         fs=get_fs(),
         partitions={
-            "dt": pendulum.parse("2022-08-17", exact=True),
+            "dt": pendulum.parse("2022-09-07", exact=True),
         },
         verbose=True,
         progress=True,
