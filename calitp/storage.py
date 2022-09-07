@@ -528,7 +528,7 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
 
 class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
     ts: pendulum.DateTime
-    config_extract_ts: pendulum.DateTime
+    config_extract_ts: Optional[pendulum.DateTime]
     config: AirtableGTFSDataRecord
     response_code: int
     response_headers: Optional[Dict[str, str]]
@@ -654,8 +654,6 @@ if __name__ == "__main__":
         verbose=True,
         progress=True,
     )
-    print(len(vp_files))
-
     schedule_files = fetch_all_in_partition(
         cls=GTFSScheduleFeedExtract,
         fs=get_fs(),
@@ -665,7 +663,6 @@ if __name__ == "__main__":
         verbose=True,
         progress=True,
     )
-    print(len(schedule_files))
     latest_schedule = get_latest_file(
         bucket=SCHEDULE_RAW_BUCKET,
         table=GTFSFeedType.schedule,
@@ -677,4 +674,3 @@ if __name__ == "__main__":
             "ts": pendulum.DateTime,
         },
     )
-    print(latest_schedule)
