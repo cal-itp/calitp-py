@@ -155,7 +155,7 @@ class AirtableGTFSDataRecord(BaseModel):
     id: str
     name: str
     uri: Optional[str]
-    data: Optional[GTFSFeedType]
+    data: Optional[str]
     data_quality_pipeline: Optional[bool]
     schedule_to_use_for_rt_validation: Optional[List[str]]
     auth_query_param: Dict[str, str] = {}
@@ -163,85 +163,10 @@ class AirtableGTFSDataRecord(BaseModel):
     class Config:
         extra = "allow"
 
-    # TODO: this is a bit hacky but we need this until we split off auth query params from the URI itself
-    @root_validator(pre=True, allow_reuse=True)
-    def parse_query_params(cls, values):
-        if values.get("uri"):
-            jinja_pattern = r"(?P<param_name>\w+)={{\s*(?P<param_lookup_key>\w+)\s*}}&?"
-            match = re.search(jinja_pattern, values["uri"])
-            if match:
-                values["auth_query_param"] = {match.group("param_name"): match.group("param_lookup_key")}
-                values["uri"] = re.sub(jinja_pattern, "", values["uri"])
-            elif "api.511.org" in values["uri"]:
-                values["auth_query_param"] = {"api_key": "MTC_511_API_KEY"}
-        return values
-
-    @validator("uri", pre=True, allow_reuse=True)
-    def handle_remaining_jinja(cls, v):
-        if v:
-            data = {
-                "GRAAS_SERVER_URL": os.environ["GRAAS_SERVER_URL"],
-            }
-            return Environment(autoescape=select_autoescape()).from_string(v).render(**data)
-        return v
-
-    @validator("data", pre=True, allow_reuse=True)
-    def convert_feed_type(cls, v):
-        if not v:
-            return None
-
-        if "schedule" in v.lower():
-            return GTFSFeedType.schedule
-        elif "vehicle" in v.lower():
-            return GTFSFeedType.vehicle_positions
-        elif "trip" in v.lower():
-            return GTFSFeedType.trip_updates
-        elif "alerts" in v.lower():
-            return GTFSFeedType.service_alerts
-
-        return v
-
     @property
     def schedule_url(self) -> Optional[HttpUrl]:
         # TODO: implement me
         raise NotImplementedError
-
-    # TODO: this should actually rely on airtable data!
-    @property
-    def auth_header(self) -> Dict[str, str]:
-        if self.uri:
-            if "goswift.ly" in self.uri:
-                return {
-                    "authorization": "SWIFTLY_AUTHORIZATION_KEY_CALITP",
-                }
-            if "west-hollywood" in self.uri:
-                return {
-                    "x-umo-iq-api-key": "WEHO_RT_KEY",
-                }
-        return {}
-
-    @property
-    def base64_encoded_url(self) -> str:
-        # see: https://docs.python.org/3/library/base64.html#base64.urlsafe_b64encode
-        # we care about replacing slashes for GCS object names
-        # can use: https://www.base64url.com/ to test encoding/decoding
-        # convert in bigquery: https://cloud.google.com/bigquery/docs/reference/standard-sql/string_functions#from_base64
-        return base64.urlsafe_b64encode(self.uri.encode()).decode()
-
-    def build_request(self, auth_dict: dict) -> Request:
-        params = {k: auth_dict[v] for k, v in self.auth_query_param.items()}
-        headers = {k: auth_dict[v] for k, v in self.auth_header.items()}
-
-        # some web servers require user agents or they will throw a 4XX error
-        headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:55.0) Gecko/20100101 Firefox/55.0"
-
-        # inspired by: https://stackoverflow.com/questions/18869074/create-url-without-request-execution
-        return Request(
-            "GET",
-            url=self.uri,
-            params=params,
-            headers=headers,
-        )
 
 
 class PartitionedGCSArtifact(BaseModel, abc.ABC):
@@ -524,6 +449,111 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
             ts=pendulum.parse(latest.partition["ts"], exact=True),
             records=[AirtableGTFSDataRecord(**json.loads(row)) for row in content.decode().splitlines()],
         )
+
+
+class GTFSDownloadConfig(BaseModel):
+    extracted_at: pendulum.DateTime
+    url: HttpUrl
+    gtfs_feed_type: GTFSFeedType
+    auth_query_params: Dict[str, str] = {}
+    auth_headers: Dict[str, str] = {}
+
+    # TODO: this is a bit hacky but we need this until we split off auth query params from the url itself
+    @root_validator(pre=True, allow_reuse=True)
+    def parse_query_params(cls, values):
+        if values.get("url"):
+            jinja_pattern = r"(?P<param_name>\w+)={{\s*(?P<param_lookup_key>\w+)\s*}}&?"
+            match = re.search(jinja_pattern, values["url"])
+            if match:
+                values["auth_query_param"] = {match.group("param_name"): match.group("param_lookup_key")}
+                values["url"] = re.sub(jinja_pattern, "", values["url"])
+            elif "api.511.org" in values["url"]:
+                values["auth_query_param"] = {"api_key": "MTC_511_API_KEY"}
+
+            if "auth_headers" in values:
+                if "goswift.ly" in values["url"]:
+                    values["auth_headers"] = {
+                        "authorization": "SWIFTLY_AUTHORIZATION_KEY_CALITP",
+                    }
+                elif "west-hollywood" in values["url"]:
+                    values["auth_headers"] = {
+                        "x-umo-iq-api-key": "WEHO_RT_KEY",
+                    }
+        return values
+
+    @validator("extracted_at", allow_reuse=True)
+    def coerce_extracted_at(cls, v):
+        if isinstance(v, datetime):
+            return pendulum.instance(v)
+        return v
+
+    @validator("url", pre=True, allow_reuse=True)
+    def handle_remaining_jinja(cls, v):
+        if v:
+            data = {
+                "GRAAS_SERVER_URL": os.environ["GRAAS_SERVER_URL"],
+            }
+            return Environment(autoescape=select_autoescape()).from_string(v).render(**data)
+        return v
+
+    @validator("gtfs_feed_type", pre=True, allow_reuse=True)
+    def convert_feed_type(cls, v):
+        if not v:
+            return None
+
+        if "schedule" in v.lower():
+            return GTFSFeedType.schedule
+        elif "vehicle" in v.lower():
+            return GTFSFeedType.vehicle_positions
+        elif "trip" in v.lower():
+            return GTFSFeedType.trip_updates
+        elif "alerts" in v.lower():
+            return GTFSFeedType.service_alerts
+
+        return v
+
+    def build_request(self, auth_dict: dict) -> Request:
+        params = {k: auth_dict[v] for k, v in self.auth_query_params.items()}
+        headers = {k: auth_dict[v] for k, v in self.auth_headers.items()}
+
+        # some web servers require user agents or they will throw a 4XX error
+        headers["User-Agent"] = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:55.0) Gecko/20100101 Firefox/55.0"
+
+        # inspired by: https://stackoverflow.com/questions/18869074/create-url-without-request-execution
+        return Request(
+            "GET",
+            url=self.url,
+            params=params,
+            headers=headers,
+        )
+
+    @property
+    def base64_encoded_url(self) -> str:
+        # see: https://docs.python.org/3/library/base64.html#base64.urlsafe_b64encode
+        # we care about replacing slashes for GCS object names
+        # can use: https://www.base64url.com/ to test encoding/decoding
+        # convert in bigquery: https://cloud.google.com/bigquery/docs/reference/standard-sql/string_functions#from_base64
+        return base64.urlsafe_b64encode(self.url.encode()).decode()
+
+
+# TODO: this will be replaced by an actual validate step
+def gtfs_datasets_to_extract_configs(extract: AirtableGTFSDataExtract) -> Tuple[List[GTFSDownloadConfig], List[AirtableGTFSDataRecord]]:
+    valid: List[GTFSDownloadConfig] = []
+    invalid: List[AirtableGTFSDataRecord] = []
+
+    for record in extract.records:
+        try:
+            valid.append(GTFSDownloadConfig(
+                config_extracted_at=extract.ts,
+                # TODO: this will be pipeline_url in the near future
+                url=record.uri,
+                gtfs_feed_type=record.data,
+            ))
+        except ValidationError:
+            invalid.append(record)
+
+    return valid, invalid
+
 
 
 class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
