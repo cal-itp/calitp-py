@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from calitp.config import get_bucket
-from calitp.storage import AirtableGTFSDataRecord, get_fs, GTFSDownloadConfig
+from calitp.storage import GTFSDownloadConfig, get_fs
 
 GCS_BUCKET = "gs://calitp-py-ci"
 
@@ -35,25 +35,24 @@ def test_get_fs_pipe(tmp_name):
     assert len(res) == 1
 
 
-def test_gtfs_download_config_handles_weird_inputs() -> None:
+def test_gtfs_download_config() -> None:
     GTFSDownloadConfig(
-        name="some valid name",
-        data=None,
-    )
-    GTFSDownloadConfig(
-        name="some valid name",
-        data="",
+        extracted_at=pendulum.now(),
+        url="https://google.com",
+        gtfs_feed_type="schedule",
     )
 
     with pytest.raises(ValidationError):
         GTFSDownloadConfig(
-            name="some valid name",
-            data="invalid string",
+            extracted_at=pendulum.now(),
+            url="https://google.com",
+            gtfs_feed_type="some invalid type",
         )
+
 
 def test_gtfs_download_config_build_request() -> None:
     GTFSDownloadConfig(
         extracted_at=pendulum.now(),
         url="https://google.com",
         gtfs_feed_type="schedule",
-    )
+    ).build_request(auth_dict={})

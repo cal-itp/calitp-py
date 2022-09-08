@@ -537,23 +537,26 @@ class GTFSDownloadConfig(BaseModel):
 
 
 # TODO: this will be replaced by an actual validate step
-def gtfs_datasets_to_extract_configs(extract: AirtableGTFSDataExtract) -> Tuple[List[GTFSDownloadConfig], List[AirtableGTFSDataRecord]]:
+def gtfs_datasets_to_extract_configs(
+    extract: AirtableGTFSDataExtract,
+) -> Tuple[List[GTFSDownloadConfig], List[AirtableGTFSDataRecord]]:
     valid: List[GTFSDownloadConfig] = []
     invalid: List[AirtableGTFSDataRecord] = []
 
     for record in extract.records:
         try:
-            valid.append(GTFSDownloadConfig(
-                config_extracted_at=extract.ts,
-                # TODO: this will be pipeline_url in the near future
-                url=record.uri,
-                gtfs_feed_type=record.data,
-            ))
+            valid.append(
+                GTFSDownloadConfig(
+                    config_extracted_at=extract.ts,
+                    # TODO: this will be pipeline_url in the near future
+                    url=record.uri,
+                    gtfs_feed_type=record.data,
+                )
+            )
         except ValidationError:
             invalid.append(record)
 
     return valid, invalid
-
 
 
 class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
