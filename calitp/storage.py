@@ -453,8 +453,9 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
 
 class GTFSDownloadConfig(BaseModel):
     extracted_at: pendulum.DateTime
+    name: Optional[str]
     url: HttpUrl
-    gtfs_feed_type: GTFSFeedType
+    feed_type: GTFSFeedType
     auth_query_params: Dict[str, str] = {}
     auth_headers: Dict[str, str] = {}
 
@@ -496,7 +497,7 @@ class GTFSDownloadConfig(BaseModel):
             return Environment(autoescape=select_autoescape()).from_string(v).render(**data)
         return v
 
-    @validator("gtfs_feed_type", pre=True, allow_reuse=True)
+    @validator("feed_type", pre=True, allow_reuse=True)
     def convert_feed_type(cls, v):
         if not v:
             return None
@@ -539,30 +540,33 @@ class GTFSDownloadConfig(BaseModel):
 # TODO: this will be replaced by an actual validate step
 def gtfs_datasets_to_extract_configs(
     extract: AirtableGTFSDataExtract,
-) -> Tuple[List[GTFSDownloadConfig], List[AirtableGTFSDataRecord]]:
+) -> Tuple[List[GTFSDownloadConfig], List[Tuple[AirtableGTFSDataRecord, ValidationError]]]:
     valid: List[GTFSDownloadConfig] = []
-    invalid: List[AirtableGTFSDataRecord] = []
+    invalid: List[Tuple[AirtableGTFSDataRecord, ValidationError]] = []
 
     for record in extract.records:
+        if not record.data_quality_pipeline:
+            continue
+
         try:
             valid.append(
                 GTFSDownloadConfig(
-                    config_extracted_at=extract.ts,
+                    extracted_at=extract.ts,
+                    name=record.name,
                     # TODO: this will be pipeline_url in the near future
                     url=record.uri,
-                    gtfs_feed_type=record.data,
+                    feed_type=record.data,
                 )
             )
-        except ValidationError:
-            invalid.append(record)
+        except ValidationError as e:
+            invalid.append((record, e))
 
     return valid, invalid
 
 
 class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
     ts: pendulum.DateTime
-    config_extract_ts: Optional[pendulum.DateTime]
-    config: AirtableGTFSDataRecord
+    config: GTFSDownloadConfig
     response_code: int
     response_headers: Optional[Dict[str, str]]
 
@@ -574,7 +578,7 @@ class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
 
     @property
     def feed_type(self) -> GTFSFeedType:
-        return self.config.data
+        return self.config.feed_type
 
     @property
     def dt(self) -> pendulum.Date:
@@ -596,8 +600,8 @@ class GTFSScheduleFeedExtract(GTFSFeedExtract):
     partition_names: ClassVar[List[str]] = ["dt", "base64_url", "ts"]
 
     @validator("config", allow_reuse=True)
-    def is_schedule_type(cls, v: AirtableGTFSDataRecord):
-        if v.data != GTFSFeedType.schedule:
+    def is_schedule_type(cls, v: GTFSDownloadConfig):
+        if v.feed_type != GTFSFeedType.schedule:
             raise TypeError("a schedule extract must come from a schedule config")
         return v
 
@@ -607,14 +611,14 @@ class GTFSRTFeedExtract(GTFSFeedExtract):
     partition_names: ClassVar[List[str]] = ["dt", "hour", "ts", "base64_url"]
 
     @validator("config", allow_reuse=True)
-    def is_rt_type(cls, v: AirtableGTFSDataRecord):
-        if not v.data.is_rt:
+    def is_rt_type(cls, v: GTFSDownloadConfig):
+        if not v.feed_type.is_rt:
             raise TypeError("a realtime extract must come from a realtime config")
         return v
 
     @property
     def table(self) -> str:
-        return self.config.data
+        return self.config.feed_type
 
     @property
     def timestamped_filename(self):
@@ -626,16 +630,13 @@ class GTFSRTFeedExtract(GTFSFeedExtract):
 
 
 def download_feed(
-    record_extract_ts: pendulum.DateTime,
-    record: AirtableGTFSDataRecord,
+    config: GTFSDownloadConfig,
     auth_dict: Dict,
     ts: pendulum.DateTime,
     default_filename="feed",
 ) -> Tuple[GTFSFeedExtract, bytes]:
-    parse_obj_as(HttpUrl, record.uri)
-
     s = Session()
-    r = s.prepare_request(record.build_request(auth_dict))
+    r = s.prepare_request(config.build_request(auth_dict))
     resp = s.send(r)
     resp.raise_for_status()
 
@@ -654,11 +655,10 @@ def download_feed(
         disposition_filename or (os.path.basename(resp.url) if resp.url.endswith(".zip") else None) or default_filename
     )
 
-    extract_class = GTFSRTFeedExtract if record.data.is_rt else GTFSScheduleFeedExtract
+    extract_class = GTFSRTFeedExtract if config.feed_type.is_rt else GTFSScheduleFeedExtract
     extract = extract_class(
         filename=filename,
-        config_extract_ts=record_extract_ts,
-        config=record,
+        config=config,
         response_code=resp.status_code,
         response_headers=resp.headers,
         ts=ts,
@@ -669,7 +669,11 @@ def download_feed(
 
 if __name__ == "__main__":
     # just some useful testing stuff
-    print(AirtableGTFSDataExtract.get_latest().path)
+    latest = AirtableGTFSDataExtract.get_latest()
+    valid, invalid = gtfs_datasets_to_extract_configs(latest)
+    if not valid:
+        print(invalid)
+    download_feed(valid[0], auth_dict={}, ts=pendulum.now())
 
     # use Etc/UTC instead of UTC
     # Etc/UTC is what the pods get as a timezone... and it serializes to 2022-08-18T00:00:00+00:00
