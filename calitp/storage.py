@@ -441,7 +441,7 @@ def get_latest(
 
     logging.info(f"identified {latest.name} as the most recent extract of {cls}")
 
-    return cls(**get_fs().getxattr(PARTITIONED_ARTIFACT_METADATA_KEY))
+    return cls(**json.loads(get_fs().getxattr(path=f"gs://{latest.name}", attr=PARTITIONED_ARTIFACT_METADATA_KEY)))
 
 
 class AirtableGTFSDataRecord(BaseModel):
@@ -553,12 +553,21 @@ class GTFSDownloadConfig(BaseModel, extra=Extra.forbid):
         return base64.urlsafe_b64encode(self.url.encode()).decode()
 
 
-class GTFSDownloadConfigExtract(BaseModel):
+class GTFSDownloadConfigExtract(PartitionedGCSArtifact):
     bucket: ClassVar[str] = GTFS_CONFIG_BUCKET
-    table: ClassVar[str] = "california_transit__gtfs_datasets"
+    table: ClassVar[str] = "gtfs_download_configs"
     partition_names: ClassVar[List[str]] = ["dt", "ts"]
     ts: pendulum.DateTime
-    records: List[GTFSDownloadConfig] = Field(..., exclude=True)
+
+    @validator("ts", allow_reuse=True)
+    def coerce_ts(cls, v):
+        if isinstance(v, datetime):
+            return pendulum.instance(v)
+        return v
+
+    @property
+    def dt(self) -> pendulum.Date:
+        return self.ts.date()
 
 
 class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
@@ -668,10 +677,12 @@ if __name__ == "__main__":
     # just some useful testing stuff
     latest = AirtableGTFSDataExtract.get_latest()
     print(latest.path, len(latest.records))
-    # valid, invalid = gtfs_datasets_to_extract_configs(latest)
-    # if not valid:
-    #     print(invalid)
-    # download_feed(valid[0], auth_dict={}, ts=pendulum.now())
+    extract = get_latest(GTFSDownloadConfigExtract)
+    fs = get_fs()
+    with fs.open(extract.path, "rb") as f:
+        content = gzip.decompress(f.read())
+    records = [GTFSDownloadConfig(**json.loads(row)) for row in content.decode().splitlines()]
+    download_feed(records[0], auth_dict={}, ts=pendulum.now())
     sys.exit(0)
 
     # use Etc/UTC instead of UTC
