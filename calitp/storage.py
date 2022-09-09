@@ -15,7 +15,7 @@ import gcsfs
 import humanize
 import pendulum
 from google.cloud import storage
-from jinja2 import Environment, StrictUndefined, select_autoescape
+from jinja2 import Environment, select_autoescape
 from pydantic import BaseModel, Field, HttpUrl, constr, validator
 from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
@@ -182,7 +182,7 @@ class AirtableGTFSDataRecord(BaseModel):
             data = {
                 "GRAAS_SERVER_URL": os.environ["GRAAS_SERVER_URL"],
             }
-            return Environment(autoescape=select_autoescape(), undefined=StrictUndefined).from_string(v).render(**data)
+            return Environment(autoescape=select_autoescape()).from_string(v).render(**data)
         return v
 
     @validator("data", pre=True, allow_reuse=True)
