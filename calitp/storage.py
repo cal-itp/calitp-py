@@ -252,15 +252,11 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
         if fs:
             logging.info(f"saving {humanize.naturalsize(len(content))} to {self.path}")
             fs.pipe(path=self.path, value=content)
-            try:
-                fs.setxattrs(
-                    path=self.path,
-                    # This syntax seems silly but it's so we pass the _value_ of PARTITIONED_ARTIFACT_METADATA_KEY
-                    **{PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)},
-                )
-            except Exception:
-                fs.delete(self.path)
-                raise
+            fs.setxattrs(
+                path=self.path,
+                # This syntax seems silly but it's so we pass the _value_ of PARTITIONED_ARTIFACT_METADATA_KEY
+                **{PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)},
+            )
 
         if client:
             logging.info(f"saving {humanize.naturalsize(len(content))} to {self.bucket} {self.name}")
@@ -275,12 +271,8 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
                 client=client,
             )
 
-            try:
-                blob.metadata = {PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)}
-                blob.patch()
-            except Exception:
-                blob.delete(client)
-                raise
+            blob.metadata = {PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)}
+            blob.patch()
 
 
 # TODO: this should really use a typevar
