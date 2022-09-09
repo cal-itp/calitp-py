@@ -481,7 +481,7 @@ class GTFSDownloadConfig(BaseModel, extra=Extra.forbid):
             elif "api.511.org" in values["url"]:
                 values["auth_query_params"] = {"api_key": "MTC_511_API_KEY"}
 
-            if "auth_headers" in values:
+            if "auth_headers" not in values:
                 if "goswift.ly" in values["url"]:
                     values["auth_headers"] = {
                         "authorization": "SWIFTLY_AUTHORIZATION_KEY_CALITP",
