@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import re
+import sys
 from abc import ABC
 from datetime import datetime
 from enum import Enum
@@ -15,7 +16,6 @@ import gcsfs
 import humanize
 import pendulum
 from google.cloud import storage
-from jinja2 import Environment, select_autoescape
 from pydantic import (
     BaseModel,
     Extra,
@@ -109,6 +109,7 @@ def make_name_bq_safe(name: str):
 
 
 AIRTABLE_BUCKET = os.getenv("CALITP_BUCKET__AIRTABLE")
+GTFS_CONFIG_BUCKET = os.getenv("CALITP_BUCKET__GTFS_CONFIG")
 SCHEDULE_RAW_BUCKET = os.getenv("CALITP_BUCKET__GTFS_SCHEDULE_RAW")
 RT_RAW_BUCKET = os.getenv("CALITP_BUCKET__GTFS_RT_RAW")
 
@@ -157,24 +158,6 @@ class GTFSFeedType(str, Enum):
         ):
             return True
         raise RuntimeError(f"managed to end up with an invalid enum type of {self}")
-
-
-class AirtableGTFSDataRecord(BaseModel):
-    id: str
-    name: str
-    uri: Optional[str]
-    data: Optional[str]
-    data_quality_pipeline: Optional[bool]
-    schedule_to_use_for_rt_validation: Optional[List[str]]
-    auth_query_param: Dict[str, str] = {}
-
-    class Config:
-        extra = "allow"
-
-    @property
-    def schedule_url(self) -> Optional[HttpUrl]:
-        # TODO: implement me
-        raise NotImplementedError
 
 
 class PartitionedGCSArtifact(BaseModel, abc.ABC):
@@ -356,6 +339,10 @@ class GCSFileInfo(GCSBaseInfo):
         return os.path.basename(self.name)
 
     @property
+    def path(self) -> str:
+        return f"gs://{self.bucket}/{self.name}"
+
+    @property
     def partition(self) -> Dict[str, str]:
         return partition_map(self.name)
 
@@ -418,6 +405,63 @@ def get_latest_file(
     return ret
 
 
+def get_latest(
+    cls: Type[PartitionedGCSArtifact],
+    bucket: str = None,
+    table: str = None,
+    partition_names: List[str] = None,
+) -> PartitionedGCSArtifact:
+    if not bucket:
+        bucket = cls.bucket
+
+        if not isinstance(bucket, str):
+            raise TypeError(f"must either pass bucket, or the bucket must resolve to a string; got {type(bucket)}")
+
+    if not table:
+        table = cls.table
+
+        if not isinstance(table, str):
+            raise TypeError(f"must either pass table, or the table must resolve to a string; got {type(table)}")
+
+    if not partition_names:
+        partition_names = cls.partition_names
+
+        if not isinstance(partition_names, list):
+            raise TypeError(
+                f"must either pass partition names, or the partition names must resolve to a list; got {type(partition_names)}"
+            )
+
+    latest = get_latest_file(
+        bucket,
+        table,
+        prefix_partitions={},
+        # TODO: this doesn't pick up the type hint of dt since it's a property; it's fine as a string but we should fix
+        partition_types={name: get_type_hints(cls).get(name, str) for name in partition_names},
+    )
+
+    logging.info(f"identified {latest.name} as the most recent extract of {cls}")
+
+    return cls(**get_fs().getxattr(PARTITIONED_ARTIFACT_METADATA_KEY))
+
+
+class AirtableGTFSDataRecord(BaseModel):
+    id: str
+    name: str
+    uri: Optional[str]
+    pipeline_url: Optional[str]
+    data: Optional[str]
+    data_quality_pipeline: Optional[bool]
+    schedule_to_use_for_rt_validation: Optional[List[str]]
+    authorization_url_parameter_name: Optional[str]
+    url_secret_key_name: Optional[str]
+    authorization_header_parameter_name: Optional[str]
+    header_secret_key_name: Optional[str]
+    auth_query_param: Dict[str, str] = {}
+
+    class Config:
+        extra = "allow"
+
+
 class AirtableGTFSDataExtract(PartitionedGCSArtifact):
     bucket: ClassVar[str] = AIRTABLE_BUCKET
     table: ClassVar[str] = "california_transit__gtfs_datasets"
@@ -429,7 +473,8 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
     def dt(self) -> pendulum.Date:
         return self.ts.date()
 
-    # TODO: this should probably be abstracted somewhere... it's useful in lots of places, probably
+    # TODO: this is separate from the general get_latest because our
+    #  airtable downloader does not set metadata yet
     @classmethod
     def get_latest(cls) -> "AirtableGTFSDataExtract":
         latest = get_latest_file(
@@ -458,45 +503,14 @@ class GTFSDownloadConfig(BaseModel, extra=Extra.forbid):
     name: Optional[str]
     url: HttpUrl
     feed_type: GTFSFeedType
+    schedule_url_for_validation: Optional[HttpUrl]
     auth_query_params: Dict[str, str] = {}
     auth_headers: Dict[str, str] = {}
-
-    # TODO: this is a bit hacky but we need this until we split off auth query params from the url itself
-    @root_validator(pre=True, allow_reuse=True)
-    def parse_query_params(cls, values):
-        if values.get("url"):
-            jinja_pattern = r"(?P<param_name>\w+)={{\s*(?P<param_lookup_key>\w+)\s*}}&?"
-            match = re.search(jinja_pattern, values["url"])
-            if match:
-                values["auth_query_params"] = {match.group("param_name"): match.group("param_lookup_key")}
-                values["url"] = re.sub(jinja_pattern, "", values["url"])
-            elif "api.511.org" in values["url"]:
-                values["auth_query_params"] = {"api_key": "MTC_511_API_KEY"}
-
-            if "auth_headers" not in values:
-                if "goswift.ly" in values["url"]:
-                    values["auth_headers"] = {
-                        "authorization": "SWIFTLY_AUTHORIZATION_KEY_CALITP",
-                    }
-                elif "west-hollywood" in values["url"]:
-                    values["auth_headers"] = {
-                        "x-umo-iq-api-key": "WEHO_RT_KEY",
-                    }
-        return values
 
     @validator("extracted_at", allow_reuse=True)
     def coerce_extracted_at(cls, v):
         if isinstance(v, datetime):
             return pendulum.instance(v)
-        return v
-
-    @validator("url", pre=True, allow_reuse=True)
-    def handle_remaining_jinja(cls, v):
-        if v:
-            data = {
-                "GRAAS_SERVER_URL": os.environ["GRAAS_SERVER_URL"],
-            }
-            return Environment(autoescape=select_autoescape()).from_string(v).render(**data)
         return v
 
     @validator("feed_type", pre=True, allow_reuse=True)
@@ -539,31 +553,12 @@ class GTFSDownloadConfig(BaseModel, extra=Extra.forbid):
         return base64.urlsafe_b64encode(self.url.encode()).decode()
 
 
-# TODO: this will be replaced by an actual validate step
-def gtfs_datasets_to_extract_configs(
-    extract: AirtableGTFSDataExtract,
-) -> Tuple[List[GTFSDownloadConfig], List[Tuple[AirtableGTFSDataRecord, ValidationError]]]:
-    valid: List[GTFSDownloadConfig] = []
-    invalid: List[Tuple[AirtableGTFSDataRecord, ValidationError]] = []
-
-    for record in extract.records:
-        if not record.data_quality_pipeline:
-            continue
-
-        try:
-            valid.append(
-                GTFSDownloadConfig(
-                    extracted_at=extract.ts,
-                    name=record.name,
-                    # TODO: this will be pipeline_url in the near future
-                    url=record.uri,
-                    feed_type=record.data,
-                )
-            )
-        except ValidationError as e:
-            invalid.append((record, e))
-
-    return valid, invalid
+class GTFSDownloadConfigExtract(BaseModel):
+    bucket: ClassVar[str] = GTFS_CONFIG_BUCKET
+    table: ClassVar[str] = "california_transit__gtfs_datasets"
+    partition_names: ClassVar[List[str]] = ["dt", "ts"]
+    ts: pendulum.DateTime
+    records: List[GTFSDownloadConfig] = Field(..., exclude=True)
 
 
 class GTFSFeedExtract(PartitionedGCSArtifact, ABC):
@@ -599,7 +594,7 @@ class GTFSScheduleFeedExtract(GTFSFeedExtract):
     bucket: ClassVar[str] = SCHEDULE_RAW_BUCKET
     table: ClassVar[str] = GTFSFeedType.schedule
     feed_type: ClassVar[str] = GTFSFeedType.schedule
-    partition_names: ClassVar[List[str]] = ["dt", "base64_url", "ts"]
+    partition_names: ClassVar[List[str]] = ["dt", "ts", "base64_url"]
 
     @validator("config", allow_reuse=True)
     def is_schedule_type(cls, v: GTFSDownloadConfig):
@@ -672,10 +667,12 @@ def download_feed(
 if __name__ == "__main__":
     # just some useful testing stuff
     latest = AirtableGTFSDataExtract.get_latest()
-    valid, invalid = gtfs_datasets_to_extract_configs(latest)
-    if not valid:
-        print(invalid)
-    download_feed(valid[0], auth_dict={}, ts=pendulum.now())
+    print(latest.path, len(latest.records))
+    # valid, invalid = gtfs_datasets_to_extract_configs(latest)
+    # if not valid:
+    #     print(invalid)
+    # download_feed(valid[0], auth_dict={}, ts=pendulum.now())
+    sys.exit(0)
 
     # use Etc/UTC instead of UTC
     # Etc/UTC is what the pods get as a timezone... and it serializes to 2022-08-18T00:00:00+00:00
