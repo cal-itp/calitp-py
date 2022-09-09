@@ -283,6 +283,7 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
                 raise
 
 
+# TODO: this should really use a typevar
 def fetch_all_in_partition(
     cls: Type[PartitionedGCSArtifact],
     fs: gcsfs.GCSFileSystem,
@@ -291,7 +292,7 @@ def fetch_all_in_partition(
     table: str = None,
     verbose=False,
     progress=False,
-) -> List[Type[PartitionedGCSArtifact]]:
+) -> List[PartitionedGCSArtifact]:
     if not bucket:
         bucket = cls.bucket
 
@@ -318,7 +319,7 @@ def fetch_all_in_partition(
     # files = client.list_blobs(bucket.removeprefix("gs://"), prefix=prefix, delimiter=None)
     files = client.list_blobs(re.sub(r"^gs://", "", bucket), prefix=prefix, delimiter=None)
 
-    parsed = []
+    parsed: List[PartitionedGCSArtifact] = []
 
     for file in files:
         try:
