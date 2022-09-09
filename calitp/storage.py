@@ -16,7 +16,15 @@ import humanize
 import pendulum
 from google.cloud import storage
 from jinja2 import Environment, select_autoescape
-from pydantic import BaseModel, Field, HttpUrl, ValidationError, constr, validator
+from pydantic import (
+    BaseModel,
+    Extra,
+    Field,
+    HttpUrl,
+    ValidationError,
+    constr,
+    validator,
+)
 from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
 from requests import Request, Session
@@ -451,7 +459,8 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
         )
 
 
-class GTFSDownloadConfig(BaseModel):
+# forbid here as we want to be super careful/strict
+class GTFSDownloadConfig(BaseModel, extra=Extra.forbid):
     extracted_at: pendulum.DateTime
     name: Optional[str]
     url: HttpUrl
@@ -466,10 +475,10 @@ class GTFSDownloadConfig(BaseModel):
             jinja_pattern = r"(?P<param_name>\w+)={{\s*(?P<param_lookup_key>\w+)\s*}}&?"
             match = re.search(jinja_pattern, values["url"])
             if match:
-                values["auth_query_param"] = {match.group("param_name"): match.group("param_lookup_key")}
+                values["auth_query_params"] = {match.group("param_name"): match.group("param_lookup_key")}
                 values["url"] = re.sub(jinja_pattern, "", values["url"])
             elif "api.511.org" in values["url"]:
-                values["auth_query_param"] = {"api_key": "MTC_511_API_KEY"}
+                values["auth_query_params"] = {"api_key": "MTC_511_API_KEY"}
 
             if "auth_headers" in values:
                 if "goswift.ly" in values["url"]:
