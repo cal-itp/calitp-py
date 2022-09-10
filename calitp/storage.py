@@ -683,6 +683,7 @@ if __name__ == "__main__":
         content = gzip.decompress(f.read())
     records = [GTFSDownloadConfig(**json.loads(row)) for row in content.decode().splitlines()]
     download_feed(records[0], auth_dict={}, ts=pendulum.now())
+    print("downloaded a thing!")
     sys.exit(0)
 
     # use Etc/UTC instead of UTC
