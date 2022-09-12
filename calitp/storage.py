@@ -552,6 +552,10 @@ class GTFSDownloadConfig(BaseModel, extra=Extra.forbid):
         # convert in bigquery: https://cloud.google.com/bigquery/docs/reference/standard-sql/string_functions#from_base64
         return base64.urlsafe_b64encode(self.url.encode()).decode()
 
+    @property
+    def base64_validation_url(self) -> str:
+        return base64.urlsafe_b64encode(self.schedule_url_for_validation.encode()).decode()
+
 
 class GTFSDownloadConfigExtract(PartitionedGCSArtifact):
     bucket: ClassVar[str] = GTFS_CONFIG_BUCKET
