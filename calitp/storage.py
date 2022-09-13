@@ -499,7 +499,7 @@ class AirtableGTFSDataExtract(PartitionedGCSArtifact):
 
 # forbid here as we want to be super careful/strict
 class GTFSDownloadConfig(BaseModel, extra=Extra.forbid):
-    extracted_at: pendulum.DateTime
+    extracted_at: Optional[pendulum.DateTime]
     name: Optional[str]
     url: HttpUrl
     feed_type: GTFSFeedType
