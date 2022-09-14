@@ -109,7 +109,7 @@ def make_name_bq_safe(name: str):
 
 
 AIRTABLE_BUCKET = os.getenv("CALITP_BUCKET__AIRTABLE")
-GTFS_CONFIG_BUCKET = os.getenv("CALITP_BUCKET__GTFS_CONFIG")
+GTFS_DOWNLOAD_CONFIG_BUCKET = os.getenv("CALITP_BUCKET__GTFS_DOWNLOAD_CONFIG")
 SCHEDULE_RAW_BUCKET = os.getenv("CALITP_BUCKET__GTFS_SCHEDULE_RAW")
 RT_RAW_BUCKET = os.getenv("CALITP_BUCKET__GTFS_RT_RAW")
 
@@ -558,7 +558,7 @@ class GTFSDownloadConfig(BaseModel, extra=Extra.forbid):
 
 
 class GTFSDownloadConfigExtract(PartitionedGCSArtifact):
-    bucket: ClassVar[str] = GTFS_CONFIG_BUCKET
+    bucket: ClassVar[str] = GTFS_DOWNLOAD_CONFIG_BUCKET
     table: ClassVar[str] = "gtfs_download_configs"
     partition_names: ClassVar[List[str]] = ["dt", "ts"]
     ts: pendulum.DateTime
