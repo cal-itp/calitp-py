@@ -12,6 +12,7 @@ from datetime import datetime
 from enum import Enum
 from typing import ClassVar, Dict, List, Optional, Tuple, Type, Union, get_type_hints
 
+import backoff
 import gcsfs
 import humanize
 import pendulum
@@ -160,6 +161,21 @@ class GTFSFeedType(str, Enum):
         raise RuntimeError(f"managed to end up with an invalid enum type of {self}")
 
 
+def set_metadata(blob: storage.Blob, model: BaseModel, exclude=None):
+    blob.metadata = {PARTITIONED_ARTIFACT_METADATA_KEY: model.json(exclude=exclude)}
+    blob.patch()
+
+
+# Is there a better pattern for making this retry optional by the caller?
+@backoff.on_exception(
+    backoff.expo,
+    exception=(Exception,),
+    max_tries=2,
+)
+def set_metadata_with_retry(*args, **kwargs):
+    return set_metadata(*args, **kwargs)
+
+
 class PartitionedGCSArtifact(BaseModel, abc.ABC):
     """
     This class is designed to be subclassed to model "extracts", i.e. a particular
@@ -228,7 +244,14 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
     def path(self):
         return os.path.join(self.bucket, self.name)
 
-    def save_content(self, content: bytes, exclude=None, fs: gcsfs.GCSFileSystem = None, client: storage.Client = None):
+    def save_content(
+        self,
+        content: bytes,
+        exclude=None,
+        fs: gcsfs.GCSFileSystem = None,
+        client: storage.Client = None,
+        retry_metadata: bool = False,
+    ):
         if (fs is None) == (client is None):
             raise TypeError("must provide a gcsfs file system OR a storage client")
 
@@ -254,8 +277,12 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
                 client=client,
             )
 
-            blob.metadata = {PARTITIONED_ARTIFACT_METADATA_KEY: self.json(exclude=exclude)}
-            blob.patch()
+            set_metadata_func = set_metadata_with_retry if retry_metadata else set_metadata
+            set_metadata_func(
+                blob=blob,
+                model=self,
+                exclude=exclude,
+            )
 
 
 # TODO: this should really use a typevar
