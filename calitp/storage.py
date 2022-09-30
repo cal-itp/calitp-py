@@ -10,7 +10,17 @@ import sys
 from abc import ABC
 from datetime import datetime
 from enum import Enum
-from typing import ClassVar, Dict, List, Optional, Tuple, Type, Union, get_type_hints
+from typing import (
+    ClassVar,
+    Dict,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+    get_type_hints,
+)
 
 import backoff
 import gcsfs
@@ -556,7 +566,7 @@ class GTFSDownloadConfig(BaseModel, extra=Extra.forbid):
 
         return v
 
-    def build_request(self, auth_dict: dict) -> Request:
+    def build_request(self, auth_dict: Mapping[str, str]) -> Request:
         params = {k: auth_dict[v] for k, v in self.auth_query_params.items()}
         headers = {k: auth_dict[v] for k, v in self.auth_headers.items()}
 
@@ -668,7 +678,7 @@ class GTFSRTFeedExtract(GTFSFeedExtract):
 
 def download_feed(
     config: GTFSDownloadConfig,
-    auth_dict: Dict,
+    auth_dict: Mapping[str, str],
     ts: pendulum.DateTime,
     default_filename="feed",
 ) -> Tuple[GTFSFeedExtract, bytes]:
