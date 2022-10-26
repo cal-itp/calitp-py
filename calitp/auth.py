@@ -9,8 +9,14 @@ DEFAULT_AUTH_KEYS = tuple(os.environ[AUTH_KEYS_ENV_VAR].split(",")) if AUTH_KEYS
 
 
 def load_secrets(keys: Sequence[str] = DEFAULT_AUTH_KEYS, secret_client=secretmanager.SecretManagerServiceClient()):
+    if not keys:
+        print("no secrets to load")
+        return
+
     for key in keys:
-        if key not in os.environ:
+        if key in os.environ:
+            print(f"found {key} already in os.environ, skipping")
+        else:
             print(f"fetching secret {key}")
             name = f"projects/cal-itp-data-infra/secrets/{key}/versions/latest"
             response = secret_client.access_secret_version(request={"name": name})
@@ -24,4 +30,5 @@ def load_secrets(keys: Sequence[str] = DEFAULT_AUTH_KEYS, secret_client=secretma
 
 
 if __name__ == "__main__":
+    print("loading secrets...")
     load_secrets()
