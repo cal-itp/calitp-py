@@ -111,10 +111,10 @@ class TableFactory:
             """
 
 
-tbl = AutoTable(
+tbls = AutoTable(
     get_engine(),
     lambda s: s,  # s.replace(".", "_"),
     lambda s: "zzz_test_" not in s if not is_development() else True,
 )
 
-tbl._init()
+tbls._init()

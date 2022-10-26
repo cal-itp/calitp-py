@@ -879,7 +879,7 @@ pyasn1 = ">=0.1.3"
 
 [[package]]
 name = "siuba"
-version = "0.3.0"
+version = "0.4.0"
 description = "A package for quick, scrappy analyses with pandas and SQL"
 category = "main"
 optional = false
@@ -1027,7 +1027,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "622e1b796652460aeea1cc1ce43b899da90cfeb0542ab2a9e63553e65199b14d"
+content-hash = "eccb5b8a84b80a0d51f37238464708a16cafc78b28716b31429595e8d4fdb1b8"
 
 [metadata.files]
 aiohttp = []
