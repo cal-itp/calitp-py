@@ -1,8 +1,8 @@
 # calitp
 
 ```python
-from calitp.tables import tbl
-from calitp.import query_sql
+from calitp.tables import tbls
+from calitp. import query_sql
 
 
 ```
@@ -16,7 +16,7 @@ from calitp.import query_sql
 ### siuba
 
 ```python
-tbl.gtfs_schedule.agency()
+tbls.gtfs_schedule.agency()
 ```
 
 ### sql
