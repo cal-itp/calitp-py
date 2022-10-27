@@ -22,7 +22,7 @@ def get_secret_by_name(
     return response.payload.data.decode("UTF-8").strip()
 
 
-def get_secrets_with_label(
+def get_secrets_by_label(
     label: str,
     client=secretmanager.SecretManagerServiceClient(),
 ) -> Mapping[str, str]:
@@ -51,4 +51,4 @@ def get_secrets_with_label(
 if __name__ == "__main__":
     print("loading secrets...")
     get_secret_by_name("BEAR_TRANSIT_KEY")
-    print(get_secrets_with_label("gtfs_rt").keys())
+    print(get_secrets_by_label("gtfs_rt").keys())
