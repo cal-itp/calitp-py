@@ -1,11 +1,7 @@
-import os
 from typing import Mapping
 
 import google_crc32c
 from google.cloud import secretmanager
-
-AUTH_KEYS_ENV_VAR = "CALITP_AUTH_KEYS"
-DEFAULT_AUTH_KEYS = tuple(os.environ[AUTH_KEYS_ENV_VAR].split(",")) if AUTH_KEYS_ENV_VAR in os.environ else tuple()
 
 
 def get_secrets_with_label(
