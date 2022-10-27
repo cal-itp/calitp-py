@@ -349,20 +349,15 @@ grpc = ["grpcio (>=1.38.0,<2.0dev)"]
 
 [[package]]
 name = "google-cloud-secret-manager"
-version = "2.12.4"
+version = "1.0.0"
 description = "Secret Manager API API client library"
 category = "main"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*"
 
 [package.dependencies]
-google-api-core = {version = ">=1.32.0,<2.0.0 || >=2.8.0,<3.0.0dev", extras = ["grpc"]}
-grpc-google-iam-v1 = ">=0.12.4,<1.0.0dev"
-proto-plus = ">=1.22.0,<2.0.0dev"
-protobuf = ">=3.19.0,<5.0.0dev"
-
-[package.extras]
-libcst = ["libcst (>=0.2.5)"]
+google-api-core = {version = ">=1.14.0,<2.0.0dev", extras = ["grpc"]}
+grpc-google-iam-v1 = ">=0.12.3,<0.13dev"
 
 [[package]]
 name = "google-cloud-storage"
@@ -1043,7 +1038,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "fb1600d3864591a40ac992513ba967b8fd6b6ec37386ac90fb2b15bd6f02a89d"
+content-hash = "e295420023ee93f0a54eaeaf2ed85859641110593ed0244f498c4c0769b1ca38"
 
 [metadata.files]
 aiohttp = []
