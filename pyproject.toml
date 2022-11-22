@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "calitp"
-version = "2022.10.27.3"
+version = "2022.11.22a0"
 description = "Shared code for the Cal-ITP data codebases"
 authors = ["Andrew Vaccaro <atvaccaro@gmail.com>"]
 license = "GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007"
@@ -20,7 +20,10 @@ Jinja2 = "<3.1.0"
 # These are just to play nicely with composer
 google-cloud-bigquery-storage = "2.14.1"
 google-api-core = "<2.0.0dev,>=1.32.0"
-protobuf = ">=3.19.0,<4.0.0dev"
+# this is the version we need for realtime bindings to work
+# since as of 0.0.7 they do not pin protobuf to <4
+# https://github.com/MobilityData/gtfs-realtime-bindings/issues/71
+protobuf = "^3.20.2"
 tqdm = "^4.64.0"
 backoff = "^2.1.2"
 google-cloud-secret-manager = "1.0.0"
