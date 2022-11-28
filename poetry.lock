@@ -20,11 +20,11 @@ speedups = ["aiodns", "brotli", "cchardet"]
 
 [[package]]
 name = "aiosignal"
-version = "1.2.0"
+version = "1.3.1"
 description = "aiosignal: a list of registered asynchronous callbacks"
 category = "main"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.7"
 
 [package.dependencies]
 frozenlist = ">=1.1.0"
@@ -148,7 +148,7 @@ test = ["pytest (>=6)"]
 
 [[package]]
 name = "frozenlist"
-version = "1.3.1"
+version = "1.3.3"
 description = "A list-like structure which implements collections.abc.MutableSequence"
 category = "main"
 optional = false
@@ -156,7 +156,7 @@ python-versions = ">=3.7"
 
 [[package]]
 name = "fsspec"
-version = "2022.8.2"
+version = "2022.5.0"
 description = "File-system specification"
 category = "main"
 optional = false
@@ -176,7 +176,7 @@ github = ["requests"]
 gs = ["gcsfs"]
 gui = ["panel"]
 hdfs = ["pyarrow (>=1)"]
-http = ["requests", "aiohttp (!=4.0.0a0,!=4.0.0a1)"]
+http = ["requests", "aiohttp"]
 libarchive = ["libarchive-c"]
 oci = ["ocifs"]
 s3 = ["s3fs"]
@@ -195,16 +195,16 @@ python-versions = ">=2.6, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "gcsfs"
-version = "2022.8.2"
+version = "2022.5.0"
 description = "Convenient Filesystem interface over GCS"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
-aiohttp = "<4.0.0a0 || >4.0.0a0,<4.0.0a1 || >4.0.0a1"
+aiohttp = "<4"
 decorator = ">4.1.2"
-fsspec = "2022.8.2"
+fsspec = "2022.5.0"
 google-auth = ">=1.2"
 google-auth-oauthlib = "*"
 google-cloud-storage = "*"
@@ -350,7 +350,7 @@ grpc-google-iam-v1 = ">=0.12.3,<0.13dev"
 
 [[package]]
 name = "google-cloud-storage"
-version = "2.5.0"
+version = "2.6.0"
 description = "Google Cloud Storage API client library"
 category = "main"
 optional = false
@@ -669,8 +669,8 @@ optional = false
 python-versions = ">=3.6"
 
 [package.extras]
-testing = ["pytest-benchmark", "pytest"]
-dev = ["tox", "pre-commit"]
+dev = ["pre-commit", "tox"]
+testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "proto-plus"
@@ -884,8 +884,8 @@ PyYAML = ">=3.0.0"
 SQLAlchemy = ">=1.2.19"
 
 [package.extras]
-test = ["hypothesis", "pytest"]
-docs = ["gapminder (==0.1)", "jupytext", "nbsphinx", "sphinx", "nbval", "jupyter", "plotnine"]
+docs = ["plotnine", "jupyter", "nbval", "sphinx", "nbsphinx", "jupytext", "gapminder (==0.1)"]
+test = ["pytest", "hypothesis"]
 
 [[package]]
 name = "six"
@@ -1019,7 +1019,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.11"
-content-hash = "ba120cf13a25fe4e94fa1bfe149b6bf9f1e892f5a397172a2e080091d8359a8a"
+content-hash = "9849021af5406c8fcdbec060aca6cb3c28672fd1c2eb035d8c15278b86936123"
 
 [metadata.files]
 aiohttp = []
