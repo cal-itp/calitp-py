@@ -27,6 +27,7 @@ import gcsfs
 import humanize
 import pendulum
 from google.cloud import storage
+from google.cloud.storage import Blob
 from pydantic import (
     BaseModel,
     Extra,
@@ -298,13 +299,11 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
 # TODO: this should really use a typevar
 def fetch_all_in_partition(
     cls: Type[PartitionedGCSArtifact],
-    fs: gcsfs.GCSFileSystem,
     partitions: Dict[str, PartitionType],
     bucket: str = None,
     table: str = None,
     verbose=False,
-    progress=False,
-) -> List[PartitionedGCSArtifact]:
+) -> Tuple[List[PartitionedGCSArtifact], List[Blob], List[Blob]]:
     if not bucket:
         bucket = cls.bucket
 
@@ -332,16 +331,20 @@ def fetch_all_in_partition(
     files = client.list_blobs(re.sub(r"^gs://", "", bucket), prefix=prefix, delimiter=None)
 
     parsed: List[PartitionedGCSArtifact] = []
+    blobs_with_missing_metadata: List[Blob] = []
+    blobs_with_invalid_metadata: List[Blob] = []
 
     for file in files:
         try:
             parsed.append(parse_obj_as(cls, json.loads(file.metadata[PARTITIONED_ARTIFACT_METADATA_KEY])))
-        except (TypeError, KeyError) as e:
-            raise RuntimeError(f"metadata missing on {bucket}/{file.name}") from e
-        except ValidationError as e:
-            raise RuntimeError(f"invalid metadata found on {bucket}/{file.name}") from e
+        except (TypeError, KeyError):
+            logging.exception(f"metadata missing on {bucket}/{file.name}")
+            blobs_with_missing_metadata.append(file)
+        except ValidationError:
+            logging.exception(f"invalid metadata found on {bucket}/{file.name}")
+            blobs_with_invalid_metadata.append(file)
 
-    return parsed
+    return parsed, blobs_with_missing_metadata, blobs_with_invalid_metadata
 
 
 class ProcessingOutcome(BaseModel, abc.ABC):
@@ -732,7 +735,7 @@ if __name__ == "__main__":
     # whereas UTC serializes to 2022-08-18T00:00:00Z
     # this should probably be checked in the partitioned artifact?
     yesterday_noon = pendulum.yesterday("Etc/UTC").replace(minute=0, second=0, microsecond=0)
-    vp_files = fetch_all_in_partition(
+    vp_files, _, _ = fetch_all_in_partition(
         cls=GTFSRTFeedExtract,
         fs=get_fs(),
         partitions={
@@ -743,7 +746,7 @@ if __name__ == "__main__":
         verbose=True,
         progress=True,
     )
-    schedule_files = fetch_all_in_partition(
+    schedule_files, _, _ = fetch_all_in_partition(
         cls=GTFSScheduleFeedExtract,
         fs=get_fs(),
         partitions={
