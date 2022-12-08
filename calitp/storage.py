@@ -546,6 +546,7 @@ class GTFSDownloadConfig(BaseModel, extra=Extra.forbid):
     schedule_url_for_validation: Optional[HttpUrl]
     auth_query_params: Dict[str, str] = {}
     auth_headers: Dict[str, str] = {}
+    computed: bool = False
 
     @validator("extracted_at", allow_reuse=True)
     def coerce_extracted_at(cls, v):
@@ -648,6 +649,7 @@ class GTFSScheduleFeedExtract(GTFSFeedExtract):
     table: ClassVar[str] = GTFSFeedType.schedule
     feed_type: ClassVar[str] = GTFSFeedType.schedule
     partition_names: ClassVar[List[str]] = ["dt", "ts", "base64_url"]
+    reconstructed: bool = False
 
     @validator("config", allow_reuse=True)
     def is_schedule_type(cls, v: GTFSDownloadConfig):
