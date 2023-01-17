@@ -1,4 +1,5 @@
 from siuba.sql import LazyTbl
+from sqlalchemy.engine import Inspector
 
 from .config import is_development
 from .sql import get_engine
@@ -45,7 +46,8 @@ class AutoTable:
             del self.__dict__[k]
 
         # initialize ----
-        self._table_names = tuple(self._engine.table_names())
+        insp = Inspector(self._engine)
+        self._table_names = tuple(insp.get_table_names()) + tuple(insp.get_view_names())
 
         mappings = {}
         for name in self._table_names:
