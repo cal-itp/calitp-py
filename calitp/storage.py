@@ -686,10 +686,11 @@ def download_feed(
     auth_dict: Mapping[str, str],
     ts: pendulum.DateTime,
     default_filename="feed",
+    **request_kwargs,
 ) -> Tuple[GTFSFeedExtract, bytes]:
     s = Session()
     r = s.prepare_request(config.build_request(auth_dict))
-    resp = s.send(r)
+    resp = s.send(r, **request_kwargs)
     resp.raise_for_status()
 
     disposition_header = resp.headers.get("content-disposition", resp.headers.get("Content-Disposition"))
@@ -728,7 +729,7 @@ if __name__ == "__main__":
     with fs.open(extract.path, "rb") as f:
         content = gzip.decompress(f.read())
     records = [GTFSDownloadConfig(**json.loads(row)) for row in content.decode().splitlines()]
-    download_feed(records[0], auth_dict={}, ts=pendulum.now())
+    download_feed(records[0], auth_dict={}, ts=pendulum.now(), timeout=1)
     print("downloaded a thing!")
     sys.exit(0)
 
