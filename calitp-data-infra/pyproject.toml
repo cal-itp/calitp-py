@@ -6,7 +6,7 @@ authors = ["Andrew Vaccaro <atvaccaro@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "~3.9"
-calitp = "2023.2.9a0"
+calitp = "2023.2.9"
 google-cloud-bigquery-storage = "2.14.1"
 google-api-core = ">=1.32.0,<2.0.0dev"
 tqdm = "^4.64.1"

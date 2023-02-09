@@ -165,14 +165,14 @@ files = [
 
 [[package]]
 name = "calitp"
-version = "2023.2.9a0"
+version = "2023.2.9"
 description = "Shared code for the Cal-ITP data codebases"
 category = "main"
 optional = false
 python-versions = ">=3.9,<3.10"
 files = [
-    {file = "calitp-2023.2.9a0-py3-none-any.whl", hash = "sha256:96ad5972f6fbff250dac2c996c966254b5777b4eacab7ca721e9cbdfc0628bc9"},
-    {file = "calitp-2023.2.9a0.tar.gz", hash = "sha256:db9001aeef4b3e87f79b1bdf25d87994254e8925cbf7bd8537083ea794be7099"},
+    {file = "calitp-2023.2.9-py3-none-any.whl", hash = "sha256:0b0792da2a44653e1bffc5be9f8ed3422ff1878fd03b6d330b184841c952ad14"},
+    {file = "calitp-2023.2.9.tar.gz", hash = "sha256:b2bddfe560baf4faabd062a602d53f803b3927df38df4e9c0871d6e1d1c7849f"},
 ]
 
 [package.dependencies]
@@ -1478,4 +1478,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.9"
-content-hash = "693d60aff8c9420d9c241df7fb5263c2edbd0161f0e35d9e5ec09bd1c51534b3"
+content-hash = "70b79c3e91e06434de62064bf1664345ff002032e79101a1f9800a91e28250df"
