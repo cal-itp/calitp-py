@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "calitp-data-infra"
-version = "2023.2.9a0"
+version = "2023.2.9"
 description = ""
 authors = ["Andrew Vaccaro <atvaccaro@gmail.com>"]
 
