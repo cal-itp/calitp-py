@@ -1,11 +1,9 @@
 import uuid
 
-import pendulum
 import pytest
-from pydantic import ValidationError
 
 from calitp.config import get_bucket
-from calitp.storage import GTFSDownloadConfig, get_fs
+from calitp.storage import get_fs
 
 GCS_BUCKET = "gs://calitp-py-ci"
 
@@ -33,26 +31,3 @@ def test_get_fs_pipe(tmp_name):
 
     res = fs.listdir(bucket_dir)
     assert len(res) == 1
-
-
-def test_gtfs_download_config() -> None:
-    GTFSDownloadConfig(
-        extracted_at=pendulum.now(),
-        url="https://google.com",
-        feed_type="schedule",
-    )
-
-    with pytest.raises(ValidationError):
-        GTFSDownloadConfig(
-            extracted_at=pendulum.now(),
-            url="https://google.com",
-            feed_type="some invalid type",
-        )
-
-
-def test_gtfs_download_config_build_request() -> None:
-    GTFSDownloadConfig(
-        extracted_at=pendulum.now(),
-        url="https://google.com",
-        feed_type="schedule",
-    ).build_request(auth_dict={})
