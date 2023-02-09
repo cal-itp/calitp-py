@@ -29,7 +29,7 @@ jobs:
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
-      - uses: abatilo/actions-poetry@v2.1.5
+      - uses: abatilo/actions-poetry@v2.2.0
       - run: cd calitp && poetry install && poetry run pytest
 
   test_calitp_analysis:
@@ -43,7 +43,7 @@ jobs:
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
-      - uses: abatilo/actions-poetry@v2.1.5
+      - uses: abatilo/actions-poetry@v2.2.0
       - run: cd calitp-data-analysis && poetry install && poetry run pytest
 
   test_calitp_infra:
@@ -57,7 +57,7 @@ jobs:
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
-      - uses: abatilo/actions-poetry@v2.1.5
+      - uses: abatilo/actions-poetry@v2.2.0
       - run: cd calitp-data-infra && poetry install && poetry run pytest
 
 # TODO: bring this back when we are comfortable with checks/tests
