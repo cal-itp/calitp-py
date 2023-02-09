@@ -11,59 +11,81 @@ jobs:
     name: "lint"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
         with:
-          python-version: '3.10'
+          python-version: '3.9'
       - name: Run pre-commit
-        uses: pre-commit/action@v2.0.0
+        uses: pre-commit/action@v3.0.0
 
-  test:
-    name: "test"
+  test_calitp:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Python
-        uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
         with:
-          python-version: '3.10'
-      - name: Install poetry
-        uses: abatilo/actions-poetry@v2.1.5
+          python-version: '3.9'
       - uses: google-github-actions/setup-gcloud@v0
         with:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
-      - name: Install dependencies
-        run: poetry install
-      - name: Run tests
-        run: poetry run pytest
+      - uses: abatilo/actions-poetry@v2.1.5
+      - run: cd calitp && poetry install && poetry run pytest
 
-  pypi:
-    name: "Release to PyPI"
+  test_calitp_analysis:
     runs-on: ubuntu-latest
-    needs:
-      - lint
-      - test
-    if: "github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')"
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
         with:
-          python-version: '3.10'
-      - name: "Upload to TEST PyPI"
-        uses: JRubics/poetry-publish@v1.11
-        if: github.event.release.prerelease
+          python-version: '3.9'
+      - uses: google-github-actions/setup-gcloud@v0
         with:
-          repository_name: testpypi
-          repository_url: https://test.pypi.org/legacy/
-          repository_username: __token__
-          repository_password: ${{ secrets.PYPI_TEST_API_TOKEN }}
-          build_format: "sdist"
-      - name: "Upload to PyPI"
-        uses: JRubics/poetry-publish@v1.11
-        if: "!github.event.release.prerelease"
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      - uses: abatilo/actions-poetry@v2.1.5
+      - run: cd calitp-data-analysis && poetry install && poetry run pytest
+
+  test_calitp_infra:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
         with:
-          repository_username: __token__
-          repository_password: ${{ secrets.PYPI_API_TOKEN }}
-          build_format: "sdist"
+          python-version: '3.9'
+      - uses: google-github-actions/setup-gcloud@v0
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+      - uses: abatilo/actions-poetry@v2.1.5
+      - run: cd calitp-data-infra && poetry install && poetry run pytest
+
+# TODO: bring this back when we are comfortable with checks/tests
+#  pypi:
+#    name: "Release to PyPI"
+#    runs-on: ubuntu-latest
+#    needs:
+#      - lint
+#      - test
+#    if: "github.event_name == 'release' && startsWith(github.event.release.tag_name, 'v')"
+#    steps:
+#      - uses: actions/checkout@v2
+#      - uses: actions/setup-python@v2
+#        with:
+#          python-version: '3.10'
+#      - name: "Upload to TEST PyPI"
+#        uses: JRubics/poetry-publish@v1.11
+#        if: github.event.release.prerelease
+#        with:
+#          repository_name: testpypi
+#          repository_url: https://test.pypi.org/legacy/
+#          repository_username: __token__
+#          repository_password: ${{ secrets.PYPI_TEST_API_TOKEN }}
+#          build_format: "sdist"
+#      - name: "Upload to PyPI"
+#        uses: JRubics/poetry-publish@v1.11
+#        if: "!github.event.release.prerelease"
+#        with:
+#          repository_username: __token__
+#          repository_password: ${{ secrets.PYPI_API_TOKEN }}
+#          build_format: "sdist"
