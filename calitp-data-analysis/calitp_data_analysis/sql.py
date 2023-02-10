@@ -16,9 +16,7 @@ CALITP_BQ_LOCATION = os.environ.get("CALITP_BQ_LOCATION", "us-west2")
 
 
 class CreateTableAs(Executable, ClauseElement):
-    def __init__(
-        self, name, select, replace=False, if_not_exists=False, partition_by=None
-    ):
+    def __init__(self, name, select, replace=False, if_not_exists=False, partition_by=None):
         self.name = name
         self.select = select
         self.replace = replace
@@ -34,9 +32,7 @@ def visit_insert_from_select(element, compiler, **kw):
     if_not_exists = " IF NOT EXISTS" if element.if_not_exists else ""
 
     # TODO: visit partition by clause
-    partition_by = (
-        f" PARTITION BY {element.partition_by}" if element.partition_by else ""
-    )
+    partition_by = f" PARTITION BY {element.partition_by}" if element.partition_by else ""
 
     return f"""
         CREATE{or_replace} TABLE{if_not_exists} {name}
@@ -113,9 +109,7 @@ def write_table(
 @require_pipeline("write_table")
 def _write_table_df(sql_stmt, table_name, engine=None, replace=True):
     if_exists = "replace" if replace else "fail"
-    return sql_stmt.to_gbq(
-        format_table_name(table_name), project_id=get_project_id(), if_exists=if_exists
-    )
+    return sql_stmt.to_gbq(format_table_name(table_name), project_id=get_project_id(), if_exists=if_exists)
 
 
 def query_sql(fname, write_as=None, replace=False, dry_run=False, as_df=True):
@@ -172,9 +166,7 @@ def sql_patch_comments(table_name, field_comments, table_comments=None, bq_clien
     if bq_client is None:
         from google.cloud import bigquery
 
-        bq_client = bigquery.Client(
-            project=get_project_id(), location=CALITP_BQ_LOCATION
-        )
+        bq_client = bigquery.Client(project=get_project_id(), location=CALITP_BQ_LOCATION)
 
     tbl = bq_client.get_table(table_name)
     old_schema = tbl.schema
