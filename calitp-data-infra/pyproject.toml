@@ -1,20 +1,21 @@
 [tool.poetry]
 name = "calitp-data-infra"
-version = "2023.2.9"
+version = "2023.2.10a2"
 description = ""
 authors = ["Andrew Vaccaro <atvaccaro@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "~3.9"
-calitp = "2023.2.9"
+python = ">=3.8,<3.10"
+calitp = "2023.2.10a0"
+# Some of these are pinned oddly to play nicely with Composer
+pydantic = "~1.9"
 google-cloud-bigquery-storage = "2.14.1"
-google-api-core = ">=1.32.0,<2.0.0dev"
 tqdm = "^4.64.1"
-typing-extensions = "^4.4.0"
 pendulum = "^2.1.2"
 humanize = "^4.6.0"
-pydantic = "^1.10.4"
 backoff = "^2.2.1"
+google-api-core = ">=1.32.0,<2.0.0dev"
+typing-extensions = "~3.10.0"
 
 [tool.poetry.dev-dependencies]
 
@@ -27,3 +28,6 @@ hypothesis = "^6.68.0"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
