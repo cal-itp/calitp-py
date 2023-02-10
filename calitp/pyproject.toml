@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "calitp"
-version = "2023.2.10a1"
+version = "2023.2.10"
 description = "Shared code for the Cal-ITP data codebases"
 authors = ["Andrew Vaccaro <atvaccaro@gmail.com>"]
 license = "GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007"
@@ -10,14 +10,10 @@ python = ">=3.8,<3.10"
 gcsfs = "2022.5.0"  # https://github.com/fsspec/gcsfs/issues/486
 fsspec = "2022.5.0"  # https://github.com/fsspec/gcsfs/issues/486
 
-
-[tool.poetry.dev-dependencies]
-pytest = "^7.1.2"
-hypothesis = "^6.54.1"
-
 [tool.poetry.group.dev.dependencies]
 mypy = "^1.0.0"
-black = "^23.1.0"
+pytest = "^7.1.2"
+hypothesis = "^6.54.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
