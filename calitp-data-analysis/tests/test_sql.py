@@ -2,10 +2,9 @@ import uuid
 
 import pandas as pd
 import pytest
+from calitp_data.config import RequiresAdminWarning, pipeline_context
 from calitp_data_analysis.sql import get_table, query_sql, write_table
 from pandas.testing import assert_frame_equal
-
-from calitp.config import RequiresAdminWarning, pipeline_context
 
 from .helpers import CI_SCHEMA_NAME, as_calitp_user
 
@@ -61,7 +60,7 @@ def test_query_sql():
     import tempfile
     from pathlib import Path
 
-    from calitp.templates import user_defined_macros
+    from calitp_data.templates import user_defined_macros
 
     with tempfile.TemporaryDirectory() as dir_name:
         p_query = Path(dir_name) / "query.yml"

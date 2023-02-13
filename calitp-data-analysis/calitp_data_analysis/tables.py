@@ -1,7 +1,6 @@
+from calitp_data.config import is_development
 from siuba.sql import LazyTbl
 from sqlalchemy.engine import Inspector
-
-from calitp.config import is_development
 
 from .sql import get_engine
 
