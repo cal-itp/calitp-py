@@ -6,7 +6,6 @@ authors = ["Andrew Vaccaro <andrew.v@jarv.us>"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"
-calitp = "2023.2.10"
 # Some of these are pinned oddly to play nicely with Composer
 pydantic = "~1.9"
 google-cloud-bigquery-storage = "2.14.1"
@@ -16,6 +15,7 @@ humanize = "^4.6.0"
 backoff = "^2.2.1"
 google-api-core = ">=1.32.0,<2.0.0dev"
 typing-extensions = ">=3.10.0.2"
+calitp-data = "2023.2.13"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.2.1"

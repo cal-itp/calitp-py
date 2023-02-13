@@ -18,7 +18,7 @@ jobs:
       - name: Run pre-commit
         uses: pre-commit/action@v3.0.0
 
-  test_calitp:
+  test_calitp_data:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -30,9 +30,9 @@ jobs:
           service_account_key: ${{ secrets.GCP_SA_KEY }}
           export_default_credentials: true
       - uses: abatilo/actions-poetry@v2.2.0
-      - run: cd calitp && poetry install && poetry run pytest
+      - run: cd calitp-data && poetry install && poetry run pytest
 
-  test_calitp_analysis:
+  test_calitp_data_analysis:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -46,7 +46,7 @@ jobs:
       - uses: abatilo/actions-poetry@v2.2.0
       - run: cd calitp-data-analysis && poetry install && poetry run pytest
 
-  test_calitp_infra:
+  test_calitp_data_infra:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
