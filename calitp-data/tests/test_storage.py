@@ -1,8 +1,8 @@
 import uuid
 
 import pytest
-from calitp.config import get_bucket
-from calitp.storage import get_fs
+from calitp_data.config import get_bucket
+from calitp_data.storage import get_fs
 
 GCS_BUCKET = "gs://calitp-py-ci"
 
