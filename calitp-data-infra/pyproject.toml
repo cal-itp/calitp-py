@@ -2,7 +2,7 @@
 name = "calitp-data-infra"
 version = "2023.2.10.2"
 description = ""
-authors = ["Andrew Vaccaro <atvaccaro@gmail.com>"]
+authors = ["Andrew Vaccaro <andrew.v@jarv.us>"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.10"

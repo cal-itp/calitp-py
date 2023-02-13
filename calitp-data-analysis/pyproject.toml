@@ -2,7 +2,7 @@
 name = "calitp-data-analysis"
 version = "2023.2.10"
 description = ""
-authors = ["Andrew Vaccaro <atvaccaro@gmail.com>"]
+authors = ["Andrew Vaccaro <andrew.v@jarv.us>"]
 
 [tool.poetry.dependencies]
 python = "~3.9"
