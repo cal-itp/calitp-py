@@ -26,6 +26,7 @@ import backoff
 import gcsfs
 import humanize
 import pendulum
+from calitp_data.config import get_bucket, is_cloud, require_pipeline
 from google.cloud import storage
 from google.cloud.storage import Blob
 from pydantic import (
@@ -41,8 +42,6 @@ from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
 from requests import Request, Session
 from typing_extensions import Annotated, Literal
-
-from calitp.config import get_bucket, is_cloud, require_pipeline
 
 JSONL_EXTENSION = ".jsonl"
 JSONL_GZIP_EXTENSION = f"{JSONL_EXTENSION}.gz"
