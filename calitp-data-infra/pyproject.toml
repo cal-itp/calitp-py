@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "calitp-data-infra"
-version = "2023.2.16"
+version = "2023.2.16.1"
 description = "Shared code for developing data pipelines that process Cal-ITP data."
 authors = ["Andrew Vaccaro <andrew.v@jarv.us>"]
 
@@ -12,7 +12,7 @@ tqdm = "^4.64.1"
 pendulum = "^2.1.2"
 humanize = "^4.6.0"
 backoff = "^2.2.1"
-google-api-core = ">=1.32.0"
+google-api-core = ">=1.31.4"
 typing-extensions = ">=3.10.0.2"
 calitp-data = "2023.2.15.1"
 google-cloud-secret-manager = "~1.0.0"
