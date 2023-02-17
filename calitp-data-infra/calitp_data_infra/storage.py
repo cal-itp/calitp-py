@@ -26,6 +26,7 @@ import backoff
 import gcsfs
 import humanize
 import pendulum
+from calitp_data.config import get_bucket, is_cloud, require_pipeline
 from google.cloud import storage
 from google.cloud.storage import Blob
 from pydantic import (
@@ -41,8 +42,6 @@ from pydantic.class_validators import root_validator
 from pydantic.tools import parse_obj_as
 from requests import Request, Session
 from typing_extensions import Annotated, Literal
-
-from .config import get_bucket, is_cloud, require_pipeline
 
 JSONL_EXTENSION = ".jsonl"
 JSONL_GZIP_EXTENSION = f"{JSONL_EXTENSION}.gz"
@@ -116,7 +115,8 @@ def read_gcfs(src_path, dst_path=None, gcs_project="", bucket=None, verbose=True
 
 def make_name_bq_safe(name: str):
     """Replace non-word characters.
-    See: https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#identifiers."""
+    See: https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#identifiers.
+    """
     return str.lower(re.sub("[^\w]", "_", name))  # noqa: W605
 
 

@@ -2,12 +2,11 @@ import uuid
 
 import pandas as pd
 import pytest
+from calitp_data.config import RequiresAdminWarning, pipeline_context
+from calitp_data_analysis.sql import get_table, query_sql, write_table
 from pandas.testing import assert_frame_equal
 
-from calitp.config import RequiresAdminWarning, pipeline_context
-from calitp.sql import get_engine, get_table, query_sql, sql_patch_comments, write_table
-
-from .helpers import CI_SCHEMA_NAME
+from .helpers import CI_SCHEMA_NAME, as_calitp_user
 
 # TODO: set up a separate project for CI, so our CI doesn't have permission
 # to create / delete prod tables. Bigquery lets you set read access on individual
@@ -43,7 +42,7 @@ def test_write_table(tmp_name):
 def test_write_table_no_admin(tmp_name):
     df = pd.DataFrame({"x": [1, 2, 3]})
 
-    with pytest.warns(RequiresAdminWarning):
+    with as_calitp_user("not the pipeline user"), pytest.warns(RequiresAdminWarning):
         write_table(df, tmp_name)
 
 
@@ -61,7 +60,7 @@ def test_query_sql():
     import tempfile
     from pathlib import Path
 
-    from calitp.templates import user_defined_macros
+    from calitp_data.templates import user_defined_macros
 
     with tempfile.TemporaryDirectory() as dir_name:
         p_query = Path(dir_name) / "query.yml"
@@ -78,19 +77,3 @@ def test_query_sql_as_df():
     df = query_sql("SELECT 1 AS n")
     assert len(df) == 1
     assert "n" in df.columns
-
-
-def test_patch_table_comments(tmp_name):
-    from sqlalchemy import MetaData, Table
-
-    engine = get_engine()
-
-    df = pd.DataFrame({"x": [1, 2, 3]})
-    with pipeline_context():
-        write_table(df, tmp_name)
-
-    sql_patch_comments(tmp_name, {"x": "x column"}, "some table")
-
-    tbl_test = Table(tmp_name, MetaData(), autoload_with=engine)
-    tbl_test.comment == "some table"
-    tbl_test.c.x.comment == "x column"

@@ -1,32 +1,12 @@
 import uuid
-from contextlib import contextmanager
 
 import pandas as pd
 import pytest
+from calitp_data_analysis.sql import get_engine, get_table, write_table
+from calitp_data_analysis.tables import AutoTable
 from siuba.sql import LazyTbl
 
-from calitp.sql import get_engine, get_table, write_table
-from calitp.tables import AutoTable
-
-from .helpers import CI_SCHEMA_NAME
-
-
-# TODO: copied from tests.sql, consolidate into helpers
-@contextmanager
-def as_pipeline():
-    import os
-
-    prev_user = os.environ.get("CALITP_USER")
-
-    os.environ["CALITP_USER"] = "pipeline"
-
-    try:
-        yield
-    finally:
-        if prev_user is None:
-            del os.environ["CALITP_USER"]
-        else:
-            os.environ["CALITP_USER"] = prev_user
+from .helpers import CI_SCHEMA_NAME, as_calitp_user
 
 
 @pytest.fixture
@@ -55,7 +35,7 @@ def test_write_table(tmp_name):
 
     df = pd.DataFrame({"x": [1, 2, 3]})
 
-    with as_pipeline():
+    with as_calitp_user("pipeline"):
         write_table(df, tmp_name)
 
     tbl = AutoTable(
@@ -72,7 +52,7 @@ def test_write_table(tmp_name):
 
 
 def test_auto_table_comments(tmp_name):
-    from calitp.tables import TableFactory
+    from calitp_data_analysis.tables import TableFactory
 
     get_engine().execute(
         f"""

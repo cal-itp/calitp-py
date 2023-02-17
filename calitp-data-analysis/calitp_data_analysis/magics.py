@@ -5,7 +5,7 @@ from IPython.core.magic import register_cell_magic
 from IPython.core.magic_arguments import argument, magic_arguments, parse_argstring
 from IPython.display import Markdown, display
 
-from calitp.sql import query_sql
+from .sql import query_sql
 
 
 @magic_arguments()

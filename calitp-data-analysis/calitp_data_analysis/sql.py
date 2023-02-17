@@ -3,19 +3,15 @@ from functools import singledispatch
 
 import pandas as pd
 import yaml
+from calitp_data.config import format_table_name, get_project_id, require_pipeline
+from calitp_data.templates import user_defined_filters, user_defined_macros
 from jinja2 import Environment
 from sqlalchemy import MetaData, Table, create_engine, sql
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.expression import ClauseElement, Executable
 
-from .config import (
-    CALITP_BQ_LOCATION,
-    CALITP_BQ_MAX_BYTES,
-    format_table_name,
-    get_project_id,
-    require_pipeline,
-)
-from .templates import user_defined_filters, user_defined_macros
+CALITP_BQ_MAX_BYTES = os.environ.get("CALITP_BQ_MAX_BYTES", 5_000_000_000)
+CALITP_BQ_LOCATION = os.environ.get("CALITP_BQ_LOCATION", "us-west2")
 
 
 class CreateTableAs(Executable, ClauseElement):
