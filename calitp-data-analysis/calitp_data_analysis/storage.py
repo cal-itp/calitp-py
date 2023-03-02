@@ -81,6 +81,9 @@ def save_partitioned_dataframe(
 
 
 if __name__ == "__main__":
+    util.testing.makeMixedDataFrame().to_parquet(
+        f"{CALITP_BUCKET__PUBLISH_DATA_ANALYSIS}/mixed_data_frame_parquet/output.parquet", partition_cols=["C"]
+    )
     save_partitioned_dataframe(
         df=util.testing.makeMixedDataFrame(),
         table="mixed_data_frame",
