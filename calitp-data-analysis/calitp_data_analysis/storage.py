@@ -6,7 +6,8 @@ from typing import Any, Dict, List, Union
 import geopandas as gpd
 import pandas as pd
 import pendulum
-from pandas import util
+from pandas.util import testing as pd_testing
+from tqdm.autonotebook import tqdm
 
 # gs://calitp-publish-data-analysis
 CALITP_BUCKET__PUBLISH_DATA_ANALYSIS = os.getenv("CALITP_BUCKET__PUBLISH_DATA_ANALYSIS")
@@ -42,6 +43,8 @@ def save_partitioned_dataframe(
     filetype="csv",
     bucket: str = None,
     filename: str = "data",
+    verbose: bool = False,
+    progress: bool = True,
     **write_kwargs,
 ) -> Dict[str, str]:
     if not bucket:
@@ -53,8 +56,14 @@ def save_partitioned_dataframe(
     if not bucket.startswith("gs://"):
         bucket = f"gs://{bucket}"
 
+    bucket_table = f"{bucket.rstrip('/')}/{table}"
     paths = {}
     grouped = df.groupby(partition_columns)
+    print_f = print
+
+    if progress:
+        grouped = tqdm(grouped, desc=bucket_table)
+        print_f = grouped.write
 
     for name, group in grouped:
         if filetype == "csv":
@@ -73,24 +82,27 @@ def save_partitioned_dataframe(
                 f"{key}={PARTITION_SERIALIZERS[type(value)](value)}"
                 for key, value in zip(partition_columns, [convert_pandas_type(elem) for elem in name])
             )
-        path = f"{bucket.rstrip('/')}/{table}/{partition_path}/{filename}{extension}"
-        print(f"Saving {name} to {path}")
+        path = f"{bucket_table}/{partition_path}/{filename}{extension}"
+        if verbose:
+            print_f(f"Saving partition {name} to {path}")
         write_func(path_or_buf=path)
         paths[str(name)] = path
     return paths
 
 
 if __name__ == "__main__":
-    util.testing.makeMixedDataFrame().to_parquet(
+    pd_testing.makeMixedDataFrame().to_parquet(
         f"{CALITP_BUCKET__PUBLISH_DATA_ANALYSIS}/mixed_data_frame_parquet/output.parquet", partition_cols=["C"]
     )
     save_partitioned_dataframe(
-        df=util.testing.makeMixedDataFrame(),
+        df=pd_testing.makeMixedDataFrame(),
         table="mixed_data_frame",
         partition_columns=["C"],
+        verbose=True,
     )
     save_partitioned_dataframe(
-        df=util.testing.makeMixedDataFrame(),
+        df=pd_testing.makeMixedDataFrame(),
         table="mixed_data_frame_multiple",
         partition_columns=["C", "D"],
+        verbose=True,
     )
