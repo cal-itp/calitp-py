@@ -39,7 +39,7 @@ def convert_pandas_type(item: Any) -> Union[str, int, pendulum.Date, pendulum.Da
 def save_partitioned_dataframe(
     df: Union[pd.DataFrame, gpd.GeoDataFrame],
     table: str,
-    partition_columns: List[str],
+    partition_by: Union[str, List[str]],
     filetype="csv",
     bucket: str = None,
     filename: str = "data",
@@ -58,7 +58,7 @@ def save_partitioned_dataframe(
 
     bucket_table = f"{bucket.rstrip('/')}/{table}"
     paths = {}
-    grouped = df.groupby(partition_columns)
+    grouped = df.groupby(partition_by)
     print_f = print
 
     if progress:
@@ -75,12 +75,12 @@ def save_partitioned_dataframe(
         else:
             raise ValueError(f"unknown filetype {filetype}")
         # I'm manually implementing this here but we probably should be handling this via PartitionedGCSArtifact
-        if len(partition_columns) == 1:
-            partition_path = f"{partition_columns[0]}={PARTITION_SERIALIZERS[type(name)](name)}"
+        if isinstance(partition_by, str):
+            partition_path = f"{partition_by[0]}={PARTITION_SERIALIZERS[type(name)](name)}"
         else:
             partition_path = "/".join(
                 f"{key}={PARTITION_SERIALIZERS[type(value)](value)}"
-                for key, value in zip(partition_columns, [convert_pandas_type(elem) for elem in name])
+                for key, value in zip(partition_by, [convert_pandas_type(elem) for elem in name])
             )
         path = f"{bucket_table}/{partition_path}/{filename}{extension}"
         if verbose:
@@ -97,12 +97,12 @@ if __name__ == "__main__":
     save_partitioned_dataframe(
         df=pd_testing.makeMixedDataFrame(),
         table="mixed_data_frame",
-        partition_columns=["C"],
+        partition_by="C",
         verbose=True,
     )
     save_partitioned_dataframe(
         df=pd_testing.makeMixedDataFrame(),
         table="mixed_data_frame_multiple",
-        partition_columns=["C", "D"],
+        partition_by=["C", "D"],
         verbose=True,
     )
