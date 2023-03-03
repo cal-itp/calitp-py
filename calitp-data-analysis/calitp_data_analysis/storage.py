@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Union
 
 import geopandas as gpd
 import pandas as pd
+import pandas._testing as pd_testing
 import pendulum
-from pandas.util import testing as pd_testing
 from tqdm.autonotebook import tqdm
 
 # gs://calitp-publish-data-analysis
