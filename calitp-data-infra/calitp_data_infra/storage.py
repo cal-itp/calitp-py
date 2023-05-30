@@ -26,7 +26,7 @@ import backoff
 import gcsfs
 import humanize
 import pendulum
-from calitp_data.config import get_bucket, is_cloud, require_pipeline
+from calitp_data.config import get_bucket, require_pipeline
 from calitp_data.storage import get_fs
 from google.cloud import storage
 from google.cloud.storage import Blob
