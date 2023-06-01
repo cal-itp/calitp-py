@@ -26,7 +26,8 @@ import backoff
 import gcsfs
 import humanize
 import pendulum
-from calitp_data.config import get_bucket, is_cloud, require_pipeline
+from calitp_data.config import get_bucket, require_pipeline
+from calitp_data.storage import get_fs
 from google.cloud import storage
 from google.cloud.storage import Blob
 from pydantic import (
@@ -45,13 +46,6 @@ from typing_extensions import Annotated, Literal
 
 JSONL_EXTENSION = ".jsonl"
 JSONL_GZIP_EXTENSION = f"{JSONL_EXTENSION}.gz"
-
-
-def get_fs(gcs_project="", **kwargs):
-    if is_cloud():
-        return gcsfs.GCSFileSystem(project=gcs_project, token="cloud", **kwargs)
-    else:
-        return gcsfs.GCSFileSystem(project=gcs_project, token="google_default", **kwargs)
 
 
 @require_pipeline("save_to_gcfs")
