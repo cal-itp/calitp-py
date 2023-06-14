@@ -180,6 +180,14 @@ def set_metadata(blob: storage.Blob, model: BaseModel, exclude=None):
 def set_metadata_with_retry(*args, **kwargs):
     return set_metadata(*args, **kwargs)
 
+# Is there a better pattern for making this retry optional by the caller?
+@backoff.on_exception(
+    backoff.expo(base=5),
+    exception=(Exception,),
+    max_tries=3,
+)
+def upload_from_string_with_retry(*args, **kwargs):
+    return upload_from_string(*args, **kwargs)
 
 class PartitionedGCSArtifact(BaseModel, abc.ABC):
     """
@@ -289,15 +297,6 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
                 model=self,
                 exclude=exclude,
             )
-
-            # Is there a better pattern for making this retry optional by the caller?
-            @backoff.on_exception(
-                backoff.expo(base=5),
-                exception=(Exception,),
-                max_tries=3,
-            )
-            def upload_from_string_with_retry(*args, **kwargs):
-                return upload_from_string(*args, **kwargs)
 
             upload_from_string_func = upload_from_string_with_retry if retry_content else upload_from_string
             upload_from_string_func(
