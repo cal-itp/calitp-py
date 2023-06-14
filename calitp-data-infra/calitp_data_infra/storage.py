@@ -166,6 +166,24 @@ class GTFSFeedType(str, Enum):
         raise RuntimeError(f"managed to end up with an invalid enum type of {self}")
 
 
+def upload_from_string(blob: storage.Blob):
+    blob.upload_from_string(
+        data=content,
+        content_type="application/octet-stream",
+        client=client,
+    )
+
+
+# Is there a better pattern for making this retry optional by the caller?
+@backoff.on_exception(
+    backoff.expo(base=5),
+    exception=(Exception,),
+    max_tries=3,
+)
+def upload_from_string_with_retry(*args, **kwargs):
+    return upload_from_string(*args, **kwargs)
+
+
 def set_metadata(blob: storage.Blob, model: BaseModel, exclude=None):
     blob.metadata = {PARTITIONED_ARTIFACT_METADATA_KEY: model.json(exclude=exclude)}
     blob.patch()
@@ -179,20 +197,6 @@ def set_metadata(blob: storage.Blob, model: BaseModel, exclude=None):
 )
 def set_metadata_with_retry(*args, **kwargs):
     return set_metadata(*args, **kwargs)
-
-
-def upload_from_string(blob: storage.Blob):
-    blob.upload_from_string()
-
-
-# Is there a better pattern for making this retry optional by the caller?
-@backoff.on_exception(
-    backoff.expo(base=5),
-    exception=(Exception,),
-    max_tries=3,
-)
-def upload_from_string_with_retry(*args, **kwargs):
-    return upload_from_string(*args, **kwargs)
 
 
 class PartitionedGCSArtifact(BaseModel, abc.ABC):
@@ -291,13 +295,6 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
                 bucket=client.bucket(self.bucket.replace("gs://", "")),
             )
 
-            set_metadata_func = set_metadata_with_retry if retry_metadata else set_metadata
-            set_metadata_func(
-                blob=blob,
-                model=self,
-                exclude=exclude,
-            )
-
             upload_from_string_func = upload_from_string_with_retry if retry_content else upload_from_string
             upload_from_string_func(
                 blob=blob,
@@ -305,6 +302,13 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
                 content_type="application/octet-stream",
                 client=client,
                 exclude=None,
+            )
+
+            set_metadata_func = set_metadata_with_retry if retry_metadata else set_metadata
+            set_metadata_func(
+                blob=blob,
+                model=self,
+                exclude=exclude,
             )
 
 
