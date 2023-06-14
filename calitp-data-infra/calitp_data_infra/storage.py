@@ -180,6 +180,11 @@ def set_metadata(blob: storage.Blob, model: BaseModel, exclude=None):
 def set_metadata_with_retry(*args, **kwargs):
     return set_metadata(*args, **kwargs)
 
+
+def upload_from_string(blob: storage.Blob):
+    blob.upload_from_string()
+
+
 # Is there a better pattern for making this retry optional by the caller?
 @backoff.on_exception(
     backoff.expo(base=5),
@@ -285,12 +290,6 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
                 bucket=client.bucket(self.bucket.replace("gs://", "")),
             )
 
-            blob.upload_from_string(
-                data=content,
-                content_type="application/octet-stream",
-                client=client,
-            )
-
             set_metadata_func = set_metadata_with_retry if retry_metadata else set_metadata
             set_metadata_func(
                 blob=blob,
@@ -300,9 +299,10 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
 
             upload_from_string_func = upload_from_string_with_retry if retry_content else upload_from_string
             upload_from_string_func(
-                blob=blob,
-                model=self,
-                exclude=exclude,
+                data=content, 
+                content_type="application/octet-stream", 
+                client=client, 
+                exclude=None,
                 )
 
 # TODO: this should really use a typevar
