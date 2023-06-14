@@ -173,9 +173,9 @@ def set_metadata(blob: storage.Blob, model: BaseModel, exclude=None):
 
 # Is there a better pattern for making this retry optional by the caller?
 @backoff.on_exception(
-    backoff.expo,
+    backoff.expo(base=5),
     exception=(Exception,),
-    max_tries=2,
+    max_tries=3,
 )
 def set_metadata_with_retry(*args, **kwargs):
     return set_metadata(*args, **kwargs)
@@ -256,6 +256,7 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
         fs: gcsfs.GCSFileSystem = None,
         client: storage.Client = None,
         retry_metadata: bool = False,
+        retry_content: bool = False,
     ):
         if (fs is None) == (client is None):
             raise TypeError("must provide a gcsfs file system OR a storage client")
@@ -289,6 +290,21 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
                 exclude=exclude,
             )
 
+            # Is there a better pattern for making this retry optional by the caller?
+            @backoff.on_exception(
+                backoff.expo(base=5),
+                exception=(Exception,),
+                max_tries=3,
+            )
+            def upload_from_string_with_retry(*args, **kwargs):
+                return upload_from_string(*args, **kwargs)
+
+            upload_from_string_func = upload_from_string_with_retry if retry_content else upload_from_string
+            upload_from_string_func(
+                blob=blob,
+                model=self,
+                exclude=exclude,
+                )
 
 # TODO: this should really use a typevar
 def fetch_all_in_partition(
