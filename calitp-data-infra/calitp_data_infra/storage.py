@@ -194,6 +194,7 @@ def upload_from_string(blob: storage.Blob):
 def upload_from_string_with_retry(*args, **kwargs):
     return upload_from_string(*args, **kwargs)
 
+
 class PartitionedGCSArtifact(BaseModel, abc.ABC):
     """
     This class is designed to be subclassed to model "extracts", i.e. a particular
@@ -299,11 +300,13 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
 
             upload_from_string_func = upload_from_string_with_retry if retry_content else upload_from_string
             upload_from_string_func(
-                data=content, 
-                content_type="application/octet-stream", 
-                client=client, 
+                blob=blob,
+                data=content,
+                content_type="application/octet-stream",
+                client=client,
                 exclude=None,
-                )
+            )
+
 
 # TODO: this should really use a typevar
 def fetch_all_in_partition(
