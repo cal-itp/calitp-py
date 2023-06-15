@@ -166,11 +166,11 @@ class GTFSFeedType(str, Enum):
         raise RuntimeError(f"managed to end up with an invalid enum type of {self}")
 
 
-def upload_from_string(blob: storage.Blob):
+def upload_from_string(blob: storage.Blob, data, content_type, client):
     blob.upload_from_string(
-        data=content,
-        content_type="application/octet-stream",
-        client=client,
+        data,
+        content_type,
+        client,
     )
 
 
@@ -301,7 +301,6 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
                 data=content,
                 content_type="application/octet-stream",
                 client=client,
-                exclude=None,
             )
 
             set_metadata_func = set_metadata_with_retry if retry_metadata else set_metadata
