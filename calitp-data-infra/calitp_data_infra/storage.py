@@ -176,7 +176,8 @@ def upload_from_string(blob: storage.Blob, data, content_type, client):
 
 # Is there a better pattern for making this retry optional by the caller?
 @backoff.on_exception(
-    backoff.expo(base=5),
+    backoff.expo,
+    base=5,
     exception=(Exception,),
     max_tries=3,
 )
@@ -191,7 +192,8 @@ def set_metadata(blob: storage.Blob, model: BaseModel, exclude=None):
 
 # Is there a better pattern for making this retry optional by the caller?
 @backoff.on_exception(
-    backoff.expo(base=5),
+    backoff.expo,
+    base=5,
     exception=(Exception,),
     max_tries=3,
 )
