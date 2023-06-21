@@ -166,6 +166,25 @@ class GTFSFeedType(str, Enum):
         raise RuntimeError(f"managed to end up with an invalid enum type of {self}")
 
 
+def upload_from_string(blob: storage.Blob, data, content_type, client):
+    blob.upload_from_string(
+        data,
+        content_type,
+        client,
+    )
+
+
+# Is there a better pattern for making this retry optional by the caller?
+@backoff.on_exception(
+    backoff.expo,
+    base=5,
+    exception=(Exception,),
+    max_tries=3,
+)
+def upload_from_string_with_retry(*args, **kwargs):
+    return upload_from_string(*args, **kwargs)
+
+
 def set_metadata(blob: storage.Blob, model: BaseModel, exclude=None):
     blob.metadata = {PARTITIONED_ARTIFACT_METADATA_KEY: model.json(exclude=exclude)}
     blob.patch()
@@ -174,8 +193,9 @@ def set_metadata(blob: storage.Blob, model: BaseModel, exclude=None):
 # Is there a better pattern for making this retry optional by the caller?
 @backoff.on_exception(
     backoff.expo,
+    base=5,
     exception=(Exception,),
-    max_tries=2,
+    max_tries=3,
 )
 def set_metadata_with_retry(*args, **kwargs):
     return set_metadata(*args, **kwargs)
@@ -256,6 +276,7 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
         fs: gcsfs.GCSFileSystem = None,
         client: storage.Client = None,
         retry_metadata: bool = False,
+        retry_content: bool = False,
     ):
         if (fs is None) == (client is None):
             raise TypeError("must provide a gcsfs file system OR a storage client")
@@ -276,7 +297,9 @@ class PartitionedGCSArtifact(BaseModel, abc.ABC):
                 bucket=client.bucket(self.bucket.replace("gs://", "")),
             )
 
-            blob.upload_from_string(
+            upload_from_string_func = upload_from_string_with_retry if retry_content else upload_from_string
+            upload_from_string_func(
+                blob=blob,
                 data=content,
                 content_type="application/octet-stream",
                 client=client,
