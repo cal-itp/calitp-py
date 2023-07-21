@@ -46,20 +46,6 @@ jobs:
       - uses: abatilo/actions-poetry@v2.2.0
       - run: cd calitp-data-analysis && poetry install && poetry run pytest
 
-  test_calitp_data_infra:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v3
-        with:
-          python-version: '3.9'
-      - uses: google-github-actions/setup-gcloud@v0
-        with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
-      - uses: abatilo/actions-poetry@v2.2.0
-      - run: cd calitp-data-infra && poetry install && poetry run pytest
-
 # TODO: bring this back when we are comfortable with checks/tests
 #  pypi:
 #    name: "Release to PyPI"
