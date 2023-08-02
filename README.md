@@ -1,3 +1,5 @@
+# DEPRECATED: these packages have been moved to https://github.com/cal-itp/data-infra
+
 # calitp-py
 
 This repository contains three libraries.
